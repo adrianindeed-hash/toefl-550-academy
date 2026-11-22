@@ -1,4 +1,5 @@
-use client
+"use client";
+
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   BookOpen,
@@ -3834,7 +3835,7 @@ function Toefl550AcademyApp() {
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans overflow-x-hidden pb-20 lg:pb-0">
       {/* Install Success Toast */}
       {installSuccessToast && (
-        <div className="fixed top-18 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-4 py-2.5 rounded-2xl shadow-lg flex items-center gap-2 text-xs font-extrabold">
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-4 py-2.5 rounded-2xl shadow-lg flex items-center gap-2 text-xs font-extrabold">
           <Check className="w-4 h-4" />
           <span>Berhasil di-install ke layar utama perangkat!</span>
         </div>
@@ -3843,7 +3844,7 @@ function Toefl550AcademyApp() {
       {/* =====================================================================
           TOP NAVIGATION HEADER (ADAPTIVE MOBILE / TABLET / DESKTOP)
       ===================================================================== */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 shadow-xs">
+      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
         <div className="max-w-[1440px] mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-3">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
