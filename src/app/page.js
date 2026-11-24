@@ -43,14 +43,15 @@ import {
   HelpCircle,
   BarChart3,
   RefreshCw,
-  Globe
+  Globe,
+  ListChecks
 } from 'lucide-react';
 
 // ============================================================================
 // 1. SAFE RUNTIME, STORAGE & NATURAL VOICE HELPERS
 // ============================================================================
 const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
-const STORAGE_KEY = 'toefl_550_general_academy_v4';
+const STORAGE_KEY = 'toefl_550_complete_syllabus_v5';
 
 function getSafeGeminiApiKey() {
   try {
@@ -92,9 +93,6 @@ function sanitizeSpeechText(rawText) {
     .trim();
 }
 
-/**
- * Deteksi Otomatis Bahasa Teks (Indonesia vs Inggris)
- */
 function detectLanguageSmart(text) {
   const clean = String(text || '').toLowerCase();
   if (!clean.trim()) return 'id-ID';
@@ -104,7 +102,8 @@ function detectLanguageSmart(text) {
     'tidak', 'bukan', 'jika', 'maka', 'karena', 'sehingga', 'pada', 'dalam',
     'kata', 'kalimat', 'subjek', 'kerja', 'jawaban', 'benar', 'salah', 'selalu',
     'wajib', 'jangan', 'harus', 'seperti', 'atau', 'oleh', 'saat', 'ketika',
-    'soal', 'opsi', 'rumus', 'jebakan', 'strategi', 'menurut', 'materi', 'contoh'
+    'soal', 'opsi', 'rumus', 'jebakan', 'strategi', 'menurut', 'materi', 'contoh',
+    'tunggal', 'jamak', 'benda', 'pasif', 'aktif', 'hitung'
   ];
 
   const enWords = [
@@ -112,7 +111,8 @@ function detectLanguageSmart(text) {
     'with', 'as', 'by', 'on', 'at', 'from', 'which', 'who', 'whose', 'although',
     'because', 'while', 'when', 'where', 'have', 'has', 'had', 'been', 'being',
     'would', 'could', 'should', 'their', 'they', 'there', 'than', 'most', 'more',
-    'patterns', 'butterflies', 'studied', 'extensively', 'laboratory', 'instruments'
+    'patterns', 'butterflies', 'studied', 'extensively', 'laboratory', 'instruments',
+    'enjoy', 'avoid', 'consider', 'recommend', 'suggest', 'postpone', 'information'
   ];
 
   const tokens = clean.match(/[a-z]+/g) || [];
@@ -129,10 +129,6 @@ function detectLanguageSmart(text) {
   return enScore > idScore ? 'en-US' : 'id-ID';
 }
 
-/**
- * Memecah teks campuran (Indonesia + kutipan Inggris) menjadi segmen-segmen bahasa
- * sehingga pembicara AI otomatis berganti aksen Indonesia dan Inggris secara fleksibel!
- */
 function splitMixedLanguageSegments(text) {
   const clean = sanitizeSpeechText(text);
   if (!clean) return [];
@@ -175,9 +171,6 @@ function splitMixedLanguageSegments(text) {
   return segments;
 }
 
-/**
- * Memilih suara paling alami (Neural / Natural / Google / Microsoft) untuk bahasa tertentu
- */
 function pickMostNaturalVoice(voices, targetLang) {
   if (!Array.isArray(voices) || voices.length === 0) return null;
   const isEn = String(targetLang).toLowerCase().startsWith('en');
@@ -245,7 +238,7 @@ function loadSavedProgress() {
         selectedTopicId:
           typeof parsed.selectedTopicId === 'string'
             ? parsed.selectedTopicId
-            : 'basic-listen-1'
+            : 'basic-struct-sv'
       };
     }
   } catch {
@@ -255,10 +248,482 @@ function loadSavedProgress() {
 }
 
 // ============================================================================
-// 2. STRUCTURED SYLLABUS PER LEVEL (LISTENING, STRUCTURE, READING)
+// 2. COMPLETE, EXHAUSTIVE TOEFL ITP SYLLABUS (24 MODULES ACROSS ALL SECTIONS)
 // ============================================================================
 const CURRICULUM = [
-  // ======================= LEVEL 1: BASIC =======================
+  // ==========================================================================
+  // LEVEL 1: BASIC (FOUNDATION SKILLS)
+  // ==========================================================================
+
+  // --- BASIC: STRUCTURE & WRITTEN EXPRESSION ---
+  {
+    id: 'basic-struct-sv',
+    level: 'Basic',
+    levelNum: 1,
+    section: 'Structure',
+    code: 'S-1.1',
+    moduleRef: 'Structure Skill 1–3',
+    title: 'Subject-Verb Agreement, Prepositional Phrases & Appositives',
+    shortTitle: 'S-V, Preposisi & Appositive',
+    category: 'Structure & Written Expression',
+    paragraphs: [
+      {
+        id: 'p1',
+        heading: '1. Hukum Utama Subject-Verb Agreement & Objek Preposisi',
+        bodyId:
+          'Setiap kalimat TOEFL wajib memiliki minimal satu Subject dan satu Main Verb yang selaras jumlahnya (Tunggal bertemu Tunggal, Jamak bertemu Jamak). Jebakan terbesar adalah Prepositional Phrase (frasa yang diawali in, on, at, of, with, from, by, among, between). Kata benda setelah preposisi adalah Object of Preposition dan TIDAK PERNAH menjadi Subject. Coret seluruh frasa preposisi sebelum menentukan Verb!',
+        voiceText:
+          'Aturan pertama TOEFL Structure: coret seluruh frasa preposisi seperti "of monarch butterflies" agar True Subject kalimat terlihat jelas.',
+        englishRule:
+          '[True Subject] + (Prepositional Phrase = CORET) + [Main Verb]  ||  Each / Every / The number of → Singular Verb',
+        examples: [
+          {
+            en: 'The migration patterns (of monarch butterflies) have been studied extensively.',
+            id: 'Pola migrasi kupu-kupu raja telah dipelajari secara luas. (Subjek asli: patterns [jamak]).',
+            highlight: 'True Subject: patterns (Jamak) → Verb: have been'
+          },
+          {
+            en: 'The number of applicants for the scholarship has doubled this year.',
+            id: 'Jumlah pelamar beasiswa itu telah berlipat ganda tahun ini. ("The number of" selalu tunggal!).',
+            highlight: 'The number of = Singular (has) ≠ A number of = Plural (have)'
+          }
+        ]
+      },
+      {
+        id: 'p2',
+        heading: '2. Appositives (Penjelas Subjek yang Diapit Koma)',
+        bodyId:
+          'Appositive adalah frasa kata benda yang diletakkan di sebelah kata benda lain untuk menjelaskannya, dan biasanya diapit oleh dua koma. Appositive BUKAN Subject dan BUKAN Verb. Jika di awal kalimat ada tanda koma setelah satu frasa nama, periksa apakah kalimat tersebut sudah memiliki Subject utama.',
+        voiceText:
+          'Frasa kata benda yang diapit dua koma disebut Appositive. Ia hanyalah penjelas dan bukan subjek kalimat.',
+        englishRule:
+          '[True Subject] + , [Appositive Noun Phrase] , + [Main Verb]',
+        examples: [
+          {
+            en: 'Sacramento, the capital of California, lies in the Central Valley.',
+            id: 'Sacramento, ibu kota California, terletak di Central Valley.',
+            highlight: 'Appositive: ", the capital of California," → Subject: Sacramento'
+          }
+        ]
+      }
+    ],
+    questions: [
+      {
+        id: 'bs-sv-1',
+        level: 'Basic',
+        section: 'Structure',
+        skillTag: 'Subject-Verb & Prepositional Phrase',
+        prompt:
+          'The migration patterns of monarch butterflies _______ studied extensively by entomologists across North America.',
+        translationId:
+          'Pola migrasi kupu-kupu raja _______ dipelajari secara luas oleh para ahli serangga di seluruh Amerika Utara.',
+        hintId:
+          'Coret frasa preposisi "of monarch butterflies". Subjek utamanya adalah "patterns" (jamak).',
+        options: [
+          { key: 'A', text: 'has been' },
+          { key: 'B', text: 'have been' },
+          { key: 'C', text: 'is being' },
+          { key: 'D', text: 'was' }
+        ],
+        correctKey: 'B',
+        breakdown: {
+          subject: 'The migration patterns (Plural)',
+          verb: 'have been studied (Plural Passive Verb)',
+          trap: 'of monarch butterflies (Object of Preposition — abaikan!)'
+        },
+        optionAnalysis: {
+          A: 'Salah: "has been" adalah bentuk tunggal.',
+          B: 'BENAR: Subjek utamanya "patterns" (jamak), pasangannya "have been".',
+          C: 'Salah: "is being" untuk subjek tunggal.',
+          D: 'Salah: "was" untuk subjek tunggal.'
+        },
+        formula: 'Coret "of monarch butterflies" → patterns [Jamak] + have been.',
+        voiceWalkthrough:
+          'Jawabannya B, "have been". Subjek aslinya adalah "patterns" yang jamak.'
+      },
+      {
+        id: 'bs-sv-2',
+        level: 'Basic',
+        section: 'Structure',
+        skillTag: 'Appositives',
+        prompt:
+          '_______, George, is attending the morning physics lecture in Hall B.',
+        translationId:
+          '_______, George, sedang menghadiri kuliah fisika pagi di Aula B.',
+        hintId: 'Karena ", George," diapit dua koma, George adalah Appositive. Kalimat masih butuh Subject!',
+        options: [
+          { key: 'A', text: 'Right now' },
+          { key: 'B', text: 'Happily' },
+          { key: 'C', text: 'Because of the rain' },
+          { key: 'D', text: 'My friend' }
+        ],
+        correctKey: 'D',
+        breakdown: {
+          subject: 'My friend (Subject utama sebelum appositive)',
+          verb: 'is attending',
+          trap: 'George diapit dua koma sehingga hanya berfungsi sebagai appositive'
+        },
+        optionAnalysis: {
+          A: 'Salah: Keterangan waktu, bukan subjek.',
+          B: 'Salah: Adverb, bukan subjek.',
+          C: 'Salah: Frasa preposisi.',
+          D: 'BENAR: "My friend" adalah kata benda yang menjadi Subject utama kalimat.'
+        },
+        formula: '[Subject (My friend)] + , [Appositive (George)] , + [Verb].',
+        voiceWalkthrough:
+          'Jawabannya D, "My friend". Karena George diapit koma, kalimat ini membutuhkan subjek di depannya.'
+      }
+    ]
+  },
+
+  {
+    id: 'basic-struct-nouns',
+    level: 'Basic',
+    levelNum: 1,
+    section: 'Structure',
+    code: 'S-1.2',
+    moduleRef: 'Structure Skill 39–42',
+    title: 'Singular vs. Plural Nouns, Irregular Plurals & Countable / Uncountable',
+    shortTitle: 'Singular/Plural & Countable/Uncountable',
+    category: 'Structure & Written Expression',
+    paragraphs: [
+      {
+        id: 'p1',
+        heading: '1. Penanda Singular vs. Plural & Irregular Plurals (Jamak Tak Beraturan)',
+        bodyId:
+          'Dalam Written Expression, perhatikan kata penanda jumlah (quantifiers) sebelum kata benda! Penanda SINGULAR (each, every, single, one, a, an) wajib diikuti kata benda tunggal. Penanda PLURAL (both, two, many, several, various, numerous, fewer) wajib diikuti kata benda jamak. Waspadai kata benda serapan Yunani/Latin yang bentuk jamaknya tidak memakai "-s"!',
+        voiceText:
+          'Hafalkan perubahan bentuk jamak tak beraturan yang sering muncul di TOEFL: criterion menjadi criteria, phenomenon menjadi phenomena, bacterium menjadi bacteria, dan datum menjadi data.',
+        englishRule:
+          'Singular → Plural: criterion → criteria  |  phenomenon → phenomena  |  bacterium → bacteria  |  datum → data  |  analysis → analyses  |  hypothesis → hypotheses',
+        examples: [
+          {
+            en: 'Several bacteria isolated from deep-sea vents can survive extreme heat.',
+            id: 'Beberapa bakteri yang diisolasi dari lubang laut dalam dapat bertahan pada panas ekstrem. (Bukan "bacterium"!).',
+            highlight: 'Several + Plural Noun (bacteria, phenomena, criteria)'
+          },
+          {
+            en: 'Every single criterion must be met before a grant is approved.',
+            id: 'Setiap satu kriteria harus dipenuhi sebelum hibah disetujui. ("Every single" + Singular "criterion").',
+            highlight: 'Every / Each / One + Singular Noun (criterion)'
+          }
+        ]
+      },
+      {
+        id: 'p2',
+        heading: '2. Countable vs. Uncountable Nouns (Kata Benda Dapat Dihitung vs. Tak Dapat Dihitung)',
+        bodyId:
+          'Kata benda Uncountable TIDAK PERNAH boleh diberi akhiran "-s" dan TIDAK PERNAH boleh diawali "a/an" atau kata penanda jumlah countable (many, few, fewer, number). Kata benda Uncountable wajib memakai (much, little, less, amount) dan Verb tunggal!',
+        voiceText:
+          'Ingat daftar kata benda Uncountable jebakan TOEFL: information, equipment, furniture, advice, luggage, news, knowledge, progress, research, dan evidence. Semuanya tidak pernah memakai huruf S di akhir!',
+        englishRule:
+          'Countable: many / few / fewer / number of + Plural Noun  ||  Uncountable: much / little / less / amount of + Singular Uncountable Noun (NO "-s"!)',
+        examples: [
+          {
+            en: 'The laboratory purchased much new equipment and gathered valuable information.',
+            id: 'Laboratorium itu membeli banyak peralatan baru dan mengumpulkan informasi berharga. (JANGAN "equipments" atau "informations"!).',
+            highlight: 'Uncountable Trap: equipment, information, advice, luggage, research, evidence'
+          }
+        ]
+      }
+    ],
+    questions: [
+      {
+        id: 'bs-noun-1',
+        level: 'Basic',
+        section: 'Structure',
+        skillTag: 'Countable vs. Uncountable Nouns',
+        prompt:
+          'Identify the error: Modern (A) space probes have transmitted (B) many valuable (C) informations about the outer (D) planets.',
+        translationId:
+          'Identifikasi kesalahan: Wahana antariksa modern telah mengirimkan banyak informasi berharga tentang planet-planet luar.',
+        hintId: 'Perhatikan kata "many" dan kata benda "informations" pada opsi C!',
+        options: [
+          { key: 'A', text: '(A) space probes' },
+          { key: 'B', text: '(B) many → seharusnya "much" (karena uncountable)' },
+          { key: 'C', text: '(C) informations → salah, harusnya uncountable "information"' },
+          { key: 'D', text: '(D) planets' }
+        ],
+        correctKey: 'C',
+        breakdown: {
+          subject: 'Modern space probes',
+          verb: 'have transmitted',
+          trap: '"information" adalah Uncountable Noun sehingga tidak pernah berbentuk jamak "informations"'
+        },
+        optionAnalysis: {
+          A: 'Benar: "space probes" adalah kata benda jamak countable.',
+          B: 'Catatan: "much" juga diperlukan jika mengganti "many", namun kesalahan fatal utama pada soal TOEFL standar adalah bentuk tidak baku "informations".',
+          C: 'SALAH (Kunci Jawaban): "information" tidak boleh ditambah "-s" (harus "much valuable information").',
+          D: 'Benar: "planets" jamak setelah "the outer".'
+        },
+        formula: 'Uncountable Nouns (information, equipment, advice, evidence) = TANPA "-s".',
+        voiceWalkthrough:
+          'Yang salah adalah C, "informations". Kata "information" termasuk Uncountable Noun sehingga tidak pernah boleh diberi akhiran S.'
+      },
+      {
+        id: 'bs-noun-2',
+        level: 'Basic',
+        section: 'Structure',
+        skillTag: 'Irregular Plurals & Quantifiers',
+        prompt:
+          'Various atmospheric _______ observed near the polar regions are caused by charged solar particles.',
+        translationId:
+          'Berbagai fenomena atmosfer yang diamati di dekat wilayah kutub disebabkan oleh partikel matahari bermuatan.',
+        hintId: 'Kata penanda "Various" (berbagai) mewajibkan kata benda JAMAK! Apa bentuk jamak dari "phenomenon"?',
+        options: [
+          { key: 'A', text: 'phenomenon' },
+          { key: 'B', text: 'phenomena' },
+          { key: 'C', text: 'phenomenons' },
+          { key: 'D', text: 'phenomenal' }
+        ],
+        correctKey: 'B',
+        breakdown: {
+          subject: 'Various atmospheric phenomena (Plural)',
+          verb: 'are caused (Plural Verb)',
+          trap: 'Bentuk jamak dari "phenomenon" adalah "phenomena", bukan "phenomenons"'
+        },
+        optionAnalysis: {
+          A: 'Salah: "phenomenon" adalah bentuk tunggal.',
+          B: 'BENAR: "phenomena" adalah bentuk jamak tak beraturan yang tepat setelah "Various".',
+          C: 'Salah: Tidak ada bentuk "phenomenons" dalam bahasa Inggris baku.',
+          D: 'Salah: "phenomenal" adalah kata sifat (adjective).'
+        },
+        formula: 'Various / Several / Many + Plural Noun (phenomena).',
+        voiceWalkthrough:
+          'Jawabannya B, "phenomena". Karena diawali penanda jamak "Various" dan memiliki verb jamak "are caused", kita wajib memakai bentuk jamak "phenomena".'
+      }
+    ]
+  },
+
+  {
+    id: 'basic-struct-articles',
+    level: 'Basic',
+    levelNum: 1,
+    section: 'Structure',
+    code: 'S-1.3',
+    moduleRef: 'Structure Skill 52–55',
+    title: 'Articles (A, An, The) & Pronoun Agreement',
+    shortTitle: 'Articles (A / An / The) & Pronouns',
+    category: 'Structure & Written Expression',
+    paragraphs: [
+      {
+        id: 'p1',
+        heading: '1. Aturan Emas Penggunaan A, An, dan The dalam TOEFL',
+        bodyId:
+          '1) Gunakan "A" sebelum bunyi konsonan (a university, a European country, a uniform — ingat: bunyinya /ju:/ konsonan!). Gunakan "An" sebelum bunyi vokal (an hour, an honest person, an umbrella — huruf "h" pada hour tidak dibaca!). 2) Kata benda tunggal dapat dihitung (Singular Countable Noun) TIDAK PERNAH boleh berdiri sendirian tanpa article (a/an/the) atau determiner (my, this, each). 3) Gunakan "The" untuk benda spesifik, satu-satunya di dunia (the Sun, the Earth, the atmosphere), nama sungai/samudra/pegunungan jamak (the Pacific Ocean, the Alps), dan Superlative (the most, the highest).',
+        voiceText:
+          'Perhatikan bunyi pengucapan saat memilih A atau An: gunakan "a university" karena berbunyi konsonan Y, dan gunakan "an hour" karena huruf H tidak dibaca.',
+        englishRule:
+          'Sound Rule: a university / a European  vs.  an hour / an honest man  ||  Singular Countable Noun wajib pakai determiner (a/an/the/my/this)!',
+        examples: [
+          {
+            en: 'An hour after the lecture ended, a European physicist presented an unusual hypothesis.',
+            id: 'Satu jam setelah kuliah berakhir, seorang fisikawan Eropa mempresentasikan sebuah hipotesis yang tidak biasa.',
+            highlight: 'an hour (bunyi vokal) | a European (bunyi konsonan /j/) | an unusual (bunyi vokal)'
+          }
+        ]
+      },
+      {
+        id: 'p2',
+        heading: '2. Pronoun Agreement & Possessive Adjectives (its vs. it’s / their)',
+        bodyId:
+          'Pastikan kata ganti (it, they, them, its, their) cocok jumlahnya dengan kata benda yang dirujuk! Jika kata bendanya tunggal ("the company", "each student"), gunakan "it / its / his or her", BUKAN "they / their". Ingat juga: "its" (tanpa apostrof) adalah kepemilikan, sedangkan "it’s" berarti "it is".',
+        voiceText:
+          'Jangan tertukar antara "its" tanpa apostrof untuk kepemilikan dan "it’s" dengan apostrof yang berarti "it is".',
+        englishRule:
+          'Singular Noun → it / its  ||  Plural Noun → they / them / their  ||  its (kepemilikan) ≠ it’s (it is)',
+        examples: [
+          {
+            en: 'Every mammal regulates its own internal body temperature.',
+            id: 'Setiap mamalia mengatur suhu tubuh internalnya sendiri. ("Every mammal" tunggal → "its").',
+            highlight: 'Every mammal (Singular) → its (Singular Possessive)'
+          }
+        ]
+      }
+    ],
+    questions: [
+      {
+        id: 'bs-art-1',
+        level: 'Basic',
+        section: 'Structure',
+        skillTag: 'Articles: A vs. An (Phonetic Rule)',
+        prompt:
+          'Identify the error: Dr. Vance spent (A) a hour explaining (B) an intricate chemical reaction to (C) the graduate students in (D) a university laboratory.',
+        translationId:
+          'Identifikasi kesalahan: Dr. Vance menghabiskan satu jam menjelaskan reaksi kimia yang rumit kepada para mahasiswa pascasarjana di sebuah laboratorium universitas.',
+        hintId: 'Ucapkan kata setelah "a" pada opsi A: apakah "hour" diawali bunyi konsonan atau vokal?',
+        options: [
+          { key: 'A', text: '(A) a hour → seharusnya "an hour"' },
+          { key: 'B', text: '(B) an intricate' },
+          { key: 'C', text: '(C) the graduate students' },
+          { key: 'D', text: '(D) a university' }
+        ],
+        correctKey: 'A',
+        breakdown: {
+          subject: 'Dr. Vance',
+          verb: 'spent',
+          trap: 'Huruf "h" pada "hour" tidak dibaca (silent h), sehingga berbunyi vokal dan wajib memakai "an"'
+        },
+        optionAnalysis: {
+          A: 'SALAH (Kunci Jawaban): "hour" berbunyi vokal /aʊər/, wajib memakai "an hour".',
+          B: 'Benar: "intricate" diawali bunyi vokal /ɪ/.',
+          C: 'Benar: Merujuk kelompok mahasiswa spesifik.',
+          D: 'Benar: "university" diawali bunyi konsonan /ju:/ sehingga memakai "a".'
+        },
+        formula: 'Silent "h" (hour, honor, honest) → AN + Noun.',
+        voiceWalkthrough:
+          'Yang salah adalah A, "a hour". Karena huruf H pada kata "hour" tidak diucapkan, bunyi awalnya adalah vokal sehingga wajib memakai "an hour".'
+      },
+      {
+        id: 'bs-art-2',
+        level: 'Basic',
+        section: 'Structure',
+        skillTag: 'Pronoun Reference & Possessive',
+        prompt:
+          'When a chameleon senses danger, _______ rapidly changes skin coloration to blend into surrounding foliage.',
+        translationId:
+          'Ketika seekor bunglon merasakan bahaya, ia dengan cepat mengubah warna kulitnya untuk menyatu dengan dedaunan di sekitarnya.',
+        hintId: 'Subjek klausa pertama adalah "a chameleon" (tunggal). Kata ganti mana yang tepat?',
+        options: [
+          { key: 'A', text: 'they' },
+          { key: 'B', text: 'it' },
+          { key: 'C', text: 'its' },
+          { key: 'D', text: 'them' }
+        ],
+        correctKey: 'B',
+        breakdown: {
+          subject: 'a chameleon (Singular) → pronoun: it',
+          verb: 'changes (Singular Verb)',
+          trap: 'Jangan tertukar antara subjek "it" dan possessive "its"'
+        },
+        optionAnalysis: {
+          A: 'Salah: "they" adalah kata ganti jamak.',
+          B: 'BENAR: "it" adalah kata ganti subjek tunggal yang merujuk pada "a chameleon".',
+          C: 'Salah: "its" adalah kata sifat kepemilikan (harus diikuti noun).',
+          D: 'Salah: "them" adalah kata ganti objek jamak.'
+        },
+        formula: 'Singular Noun (a chameleon) → Singular Subject Pronoun (it).',
+        voiceWalkthrough:
+          'Jawabannya B, "it", karena merujuk kembali pada subjek tunggal "a chameleon".'
+      }
+    ]
+  },
+
+  {
+    id: 'basic-struct-tenses',
+    level: 'Basic',
+    levelNum: 1,
+    section: 'Structure',
+    code: 'S-1.4',
+    moduleRef: 'Structure Skill 30–36',
+    title: 'Verb Tenses, Time Markers & Participles (V-ing vs. V3)',
+    shortTitle: 'Tenses, Time Markers & Participles',
+    category: 'Structure & Written Expression',
+    paragraphs: [
+      {
+        id: 'p1',
+        heading: '1. Penanda Waktu (Time Markers) vs. Pilihan Tense',
+        bodyId:
+          'Soal TOEFL Structure sangat konsisten memasangkan penanda waktu dengan tense tertentu: 1) Waktu lampau spesifik (in 1969, ago, yesterday, last century, during the Middle Ages) WAJIB memakai Simple Past (V2) dan DILARANG memakai Present Perfect (have/has + V3). 2) Kata "since" atau "for + durasi waktu" hingga sekarang WAJIB memakai Present Perfect (have/has + V3). 3) Kata "by + waktu lampau" (by 1990) memakai Past Perfect (had + V3).',
+        voiceText:
+          'Jika kalimat menyebut tahun lampau spesifik seperti "in 1848" atau "in 1969", wajib gunakan Simple Past V2 murni dan jangan gunakan "has" atau "have".',
+        englishRule:
+          'in 1969 / ago → Simple Past (V2)  ||  since 2010 / for ten years → Present Perfect (have/has + V3)  ||  by 1950 → Past Perfect (had + V3)',
+        examples: [
+          {
+            en: 'Neil Armstrong walked on the Moon in July 1969.',
+            id: 'Neil Armstrong berjalan di Bulan pada Juli 1969. (Jangan "has walked"!).',
+            highlight: 'Specific Past Time (in July 1969) → walked (V2)'
+          }
+        ]
+      },
+      {
+        id: 'p2',
+        heading: '2. Present Participle (V-ing) vs. Past Participle (V3)',
+        bodyId:
+          'V-ing tanpa "to be" dan V3 tanpa "have/to be" BUKANLAH Main Verb kalimat! Keduanya berfungsi sebagai kata sifat penjelas kata benda: gunakan V-ing jika kata bendanya MELAKUKAN aksi (aktif), dan gunakan V3 jika kata bendanya DIKENAI aksi (pasif).',
+        voiceText:
+          'Bedakan V-ing dan V3 tanpa kata kerja bantu: V-ing bermakna aktif melakukan aksi, sedangkan V3 bermakna pasif dikenai aksi.',
+        englishRule:
+          'Noun + V-ing (Aktif: melakukan)  ||  Noun + V3 (Pasif: dikenai)  ||  JANGAN tambah "is/are/was/were" jika sudah ada Main Verb!',
+        examples: [
+          {
+            en: 'The packages mailed at the post office yesterday will arrive tomorrow.',
+            id: 'Paket-paket yang dikirimkan di kantor pos kemarin akan tiba besok. ("mailed" = V3 pasif; Main Verb = "will arrive").',
+            highlight: 'mailed (V3 Pasif) + will arrive (Main Verb)'
+          }
+        ]
+      }
+    ],
+    questions: [
+      {
+        id: 'bs-tense-1',
+        level: 'Basic',
+        section: 'Structure',
+        skillTag: 'Time Markers & Tenses',
+        prompt:
+          'Identify the error: The (A) discovery of gold in California (B) in 1848 (C) has brought more than 40,000 prospectors to the region (D) within two years.',
+        translationId:
+          'Identifikasi kesalahan: Penemuan emas di California pada tahun 1848 membawa lebih dari 40.000 pencari emas ke wilayah tersebut dalam waktu dua tahun.',
+        hintId: 'Lihat penanda tahun lampau spesifik "in 1848" pada opsi B!',
+        options: [
+          { key: 'A', text: '(A) discovery' },
+          { key: 'B', text: '(B) in 1848' },
+          { key: 'C', text: '(C) has brought → seharusnya Simple Past "brought"' },
+          { key: 'D', text: '(D) within two years' }
+        ],
+        correctKey: 'C',
+        breakdown: {
+          subject: 'The discovery of gold',
+          verb: 'has brought → wajib Simple Past "brought"',
+          trap: 'Penanda waktu lampau spesifik "in 1848" melarang Present Perfect (has + V3)'
+        },
+        optionAnalysis: {
+          A: 'Benar: Kata benda "discovery" sudah tepat.',
+          B: 'Benar: Keterangan tahun lampau.',
+          C: 'SALAH (Kunci Jawaban): Wajib diubah menjadi Simple Past "brought".',
+          D: 'Benar: Keterangan durasi lampau.'
+        },
+        formula: 'Specific Past Year (in 1848) → Simple Past (brought), BUKAN has brought.',
+        voiceWalkthrough:
+          'Yang salah adalah C, "has brought". Karena ada penanda tahun lampau spesifik "in 1848", wajib memakai Simple Past "brought".'
+      },
+      {
+        id: 'bs-tense-2',
+        level: 'Basic',
+        section: 'Structure',
+        skillTag: 'Past Participle (Passive Modifier)',
+        prompt:
+          'The ancient manuscripts _______ inside the limestone cave date back to the first century.',
+        translationId:
+          'Naskah-naskah kuno yang ditemukan di dalam gua batu kapur itu berasal dari abad pertama.',
+        hintId: 'Kalimat ini sudah memiliki Main Verb "date back"! Naskah tidak menemukan dirinya sendiri, melainkan ditemukan (pasif).',
+        options: [
+          { key: 'A', text: 'discovering' },
+          { key: 'B', text: 'discovered' },
+          { key: 'C', text: 'were discovered' },
+          { key: 'D', text: 'they discovered' }
+        ],
+        correctKey: 'B',
+        breakdown: {
+          subject: 'The ancient manuscripts',
+          verb: 'date back (Main Verb sudah ada di belakang)',
+          trap: 'Jika memilih C ("were discovered"), kalimat memiliki 2 verb tanpa connector!'
+        },
+        optionAnalysis: {
+          A: 'Salah: "discovering" bermakna aktif.',
+          B: 'BENAR: Past Participle "discovered" (V3 pasif) menjelaskan "manuscripts".',
+          C: 'Salah: Akan memunculkan dua main verb tanpa penghubung.',
+          D: 'Salah: Susunan klausa tanpa connector.'
+        },
+        formula: '[Subject] + [V3 Pasif (discovered)] + [Main Verb (date back)].',
+        voiceWalkthrough:
+          'Jawabannya B, "discovered". Main verb kalimat adalah "date back", sehingga bagian yang kosong cukup diisi V3 pasif "discovered".'
+      }
+    ]
+  },
+
+  // --- BASIC: LISTENING ---
   {
     id: 'basic-listen-1',
     level: 'Basic',
@@ -266,29 +731,29 @@ const CURRICULUM = [
     section: 'Listening',
     code: 'L-1.1',
     moduleRef: 'Listening Skill 1–3',
-    title: 'Listening Basic: Focus on the Last Line & Synonyms',
-    shortTitle: 'Last Line & Synonyms',
+    title: 'Listening Basic: Focus on Last Line, Synonyms & Similar Sounds',
+    shortTitle: 'Last Line, Synonyms & Similar Sounds',
     category: 'Listening Comprehension (Part A)',
     passage: {
-      title: 'Mini Audio Drill: Short Dialogue Practice',
+      title: 'Mini Audio Drill: Short Dialogue Part A',
       text: `(Man): Billy really made a big mistake this time.\n(Woman): Yes, he forgot to turn in his research paper.\n(Narrator): What does the woman say about Billy?`,
       translationId: `(Pria): Billy benar-benar membuat kesalahan besar kali ini.\n(Wanita): Ya, dia lupa mengumpulkan makalah penelitiannya.\n(Narator): Apa yang dikatakan wanita itu tentang Billy?`
     },
     paragraphs: [
       {
         id: 'p1',
-        heading: '1. Strategi Baris Kedua (Focus on the Last Line)',
+        heading: '1. Fokus Baris Terakhir & Jebakan Bunyi Mirip (Similar Sounds)',
         bodyId:
-          'Dalam Listening Part A (Short Dialogues), jawaban hampir selalu terkandung di baris terakhir yang diucapkan pembicara kedua. Dengarkan kata kunci pada baris kedua, lalu pilih opsi jawaban yang menggunakan sinonim (persamaan kata) dan hindari kata-kata yang terdengar mirip secara bunyi (similar sounds).',
+          'Dalam Listening Part A (Short Dialogues), jawaban hampir selalu berada pada kalimat pembicara kedua (last line). Cari sinonim dari kata kunci pembicara kedua dan JANGAN PERNAH memilih opsi yang mengulang kata-kata dengan bunyi mirip (similar sounds) seperti "apart / apartment" atau "turn in / returned".',
         voiceText:
-          'Dalam Listening Part A, fokuslah pada kalimat pembicara kedua. Temukan kata kuncinya, lalu pilih jawaban yang menggunakan sinonim, seperti "forgot to turn in" yang bermakna "did not submit".',
+          'Dalam Listening Part A, fokuslah pada kalimat pembicara kedua. Temukan kata kuncinya, lalu pilih jawaban yang memakai sinonim dan hindari opsi dengan bunyi yang mirip.',
         englishRule:
-          'Second Speaker Line → Cari Sinonim (Synonyms) → Hindari Bunyi Mirip (Similar Sounds)',
+          'Second Speaker Line → Cari Sinonim (Synonyms) → Tolak Bunyi Mirip (Similar Sounds)',
         examples: [
           {
-            en: 'Woman: "Yes, he forgot to turn in his research paper." → Answer: He did not submit his assignment.',
-            id: 'Kata kunci "forgot to turn in" (lupa mengumpulkan) bersinonim dengan "did not submit".',
-            highlight: 'turn in = submit (mengumpulkan tugas)'
+            en: 'Woman: "He forgot to turn in his research paper." → Correct: He did not submit his assignment.',
+            id: 'Kata kunci "turn in" bersinonim dengan "submit" (mengumpulkan tugas).',
+            highlight: 'turn in = submit  |  call off = cancel  |  look into = investigate'
           }
         ]
       }
@@ -299,13 +764,11 @@ const CURRICULUM = [
         level: 'Basic',
         section: 'Listening',
         skillTag: 'Listening: Last Line & Synonyms',
-        type: 'Listening Comprehension',
         prompt:
           'Audio Dialogue — Man: "How was your trip to the mountains?" | Woman: "We couldn’t have asked for better weather." | Question: What does the woman mean?',
         translationId:
           'Dialog Audio — Pria: "Bagaimana perjalananmu ke pegunungan?" | Wanita: "Kami tidak mungkin mengharapkan cuaca yang lebih baik dari itu." | Pertanyaan: Apa maksud wanita tersebut?',
-        hintId:
-          'Ungkapan "couldn’t have asked for better weather" adalah pujian bahwa cuacanya sangat bagus!',
+        hintId: 'Ungkapan "couldn’t have asked for better weather" bermakna cuacanya sudah paling sempurna!',
         options: [
           { key: 'A', text: 'The weather was ideal during their trip.' },
           { key: 'B', text: 'They forgot to check the weather forecast.' },
@@ -315,13 +778,13 @@ const CURRICULUM = [
         correctKey: 'A',
         breakdown: {
           subject: 'Key Idiom: "couldn’t have asked for better weather"',
-          verb: 'Makna: Cuacanya sudah paling sempurna / ideal',
+          verb: 'Makna: Cuacanya sangat ideal / sempurna',
           trap: 'Opsi D menjebak dengan mengulang kata "asked"'
         },
         optionAnalysis: {
-          A: 'BENAR: "The weather was ideal" adalah sinonim yang tepat untuk "couldn’t have asked for better weather".',
-          B: 'Salah: Tidak ada pembahasan prakiraan cuaca.',
-          C: 'Salah: Perjalanan tetap berlangsung dengan cuaca sangat cerah.',
+          A: 'BENAR: "The weather was ideal" adalah sinonim yang tepat.',
+          B: 'Salah: Tidak dibahas.',
+          C: 'Salah: Bertentangan dengan makna dialog.',
           D: 'Salah: Jebakan pengulangan kata "asked".'
         },
         formula: 'Couldn’t have asked for better [X] = [X] was wonderful / ideal.',
@@ -332,105 +795,76 @@ const CURRICULUM = [
   },
 
   {
-    id: 'basic-struct-1',
+    id: 'basic-listen-2',
     level: 'Basic',
     levelNum: 1,
-    section: 'Structure',
-    code: 'S-1.1',
-    moduleRef: 'Structure Skill 1–5',
-    title: 'Structure Basic: Subject-Verb Agreement, Prepositions & Appositives',
-    shortTitle: 'S-V, Preposisi & Appositive',
-    category: 'Structure & Written Expression',
+    section: 'Listening',
+    code: 'L-1.2',
+    moduleRef: 'Listening Skill 4',
+    title: 'Listening Basic: Conclusions About Who, What, Where',
+    shortTitle: 'Kesimpulan Who, What & Where',
+    category: 'Listening Comprehension (Part A)',
+    passage: {
+      title: 'Mini Audio Drill: Deduksi Konteks & Lokasi',
+      text: `(Man): I’d like to deposit this check in my savings account, please.\n(Woman): Certainly. Just fill out this deposit slip and sign the back of the check.\n(Narrator): Where does this conversation probably take place?`,
+      translationId: `(Pria): Saya ingin menyetorkan cek ini ke rekening tabungan saya.\n(Wanita): Tentu. Silakan isi slip setoran ini dan tanda tangani bagian belakang cek.\n(Narator): Di mana percakapan ini kemungkinan besar berlangsung?`
+    },
     paragraphs: [
       {
         id: 'p1',
-        heading: '1. Waspadai Objek Preposisi & Appositives',
+        heading: '1. Menarik Kesimpulan Profesi, Aktivitas & Lokasi dari Kata Kunci',
         bodyId:
-          'Dalam TOEFL Structure, kata benda setelah preposisi (in, on, at, of, with, from, by) adalah Object of Preposition dan TIDAK PERNAH menjadi Subject. Begitu pula frasa kata benda yang diapit dua koma (Appositive) hanyalah penjelas subjek. Coret keduanya agar True Subject dan Main Verb terlihat jelas!',
+          'Pada tipe soal "Who is the speaker?", "What will the man probably do next?", atau "Where does this conversation take place?", pembicara tidak menyebutkan nama tempat atau profesinya secara langsung. Kumpulkan petunjuk kosakata (vocabulary clues) untuk menyimpulkannya!',
         voiceText:
-          'Coret frasa preposisi seperti "of monarch butterflies" dan frasa appositive yang diapit koma agar True Subject terlihat jelas.',
+          'Kumpulkan kata kunci kosakata dalam dialog untuk menebak siapa pembicaranya atau di mana lokasi percakapan berlangsung.',
         englishRule:
-          '[True Subject] + (Prepositional Phrase = CORET) + , [Appositive = CORET] , + [Main Verb]',
+          'deposit check + savings account + teller → Bank  ||  overdue book + reference desk + checkout → Library',
         examples: [
           {
-            en: 'The quality (of the newly imported microchips) is exceptionally high.',
-            id: 'Kualitas dari mikrocip yang baru diimpor itu sangat tinggi. (Subjek asli = The quality [tunggal]).',
-            highlight: 'True Subject: The quality (Tunggal) → Verb: is'
+            en: 'Clues: "prescription, dosage, pharmacist, tablet" → Location: Pharmacy / Drugstore.',
+            id: 'Petunjuk resep obat dan dosis menunjukkan percakapan terjadi di apotek.',
+            highlight: 'Petunjuk Kosakata → Kesimpulan Lokasi/Profesi'
           }
         ]
       }
     ],
     questions: [
       {
-        id: 'bs1-q1',
+        id: 'bl2-q1',
         level: 'Basic',
-        section: 'Structure',
-        skillTag: 'Subject-Verb Agreement',
-        type: 'Structure',
+        section: 'Listening',
+        skillTag: 'Listening: Who, What, Where',
         prompt:
-          'The migration patterns of monarch butterflies _______ studied extensively by entomologists across North America.',
+          'Audio Dialogue — Man: "I need to have two cavities filled and my teeth cleaned." | Woman: "Please have a seat in the reclining chair and open wide." | Question: Who is the woman?',
         translationId:
-          'Pola migrasi kupu-kupu raja _______ dipelajari secara luas oleh para ahli serangga di seluruh Amerika Utara.',
-        hintId:
-          'Coret frasa preposisi "of monarch butterflies". Subjek aslinya adalah "patterns" (jamak).',
+          'Dialog Audio — Pria: "Saya perlu menambal dua gigi berlubang dan membersihkan karang gigi." | Wanita: "Silakan duduk di kursi sandar dan buka mulut lebar-lebar." | Pertanyaan: Siapakah wanita tersebut?',
+        hintId: 'Perhatikan kata kunci "cavities filled" (menambal gigi berlubang) dan "teeth cleaned".',
         options: [
-          { key: 'A', text: 'has been' },
-          { key: 'B', text: 'have been' },
-          { key: 'C', text: 'is being' },
-          { key: 'D', text: 'was' }
+          { key: 'A', text: 'A hairstylist' },
+          { key: 'B', text: 'A dentist' },
+          { key: 'C', text: 'A pharmacist' },
+          { key: 'D', text: 'A flight attendant' }
         ],
         correctKey: 'B',
         breakdown: {
-          subject: 'The migration patterns (Plural / Jamak)',
-          verb: 'have been studied (Plural Passive Verb)',
-          trap: 'of monarch butterflies (Object of Preposition — abaikan!)'
+          subject: 'Clues: "cavities filled", "teeth cleaned", "reclining chair"',
+          verb: 'Profession: Dentist (Dokter gigi)',
+          trap: 'Opsi A menjebak dengan kata "reclining chair" (kursi sandar)'
         },
         optionAnalysis: {
-          A: 'Salah: "has been" adalah bentuk tunggal.',
-          B: 'BENAR: Subjek utamanya "patterns" (jamak), membutuhkan "have been".',
-          C: 'Salah: "is being" adalah bentuk tunggal.',
-          D: 'Salah: "was" adalah bentuk lampau tunggal.'
+          A: 'Salah: Penata rambut tidak menambal gigi berlubang.',
+          B: 'BENAR: Tambal gigi ("cavities filled") adalah tugas dokter gigi.',
+          C: 'Salah: Apoteker meracik obat.',
+          D: 'Salah: Pramugari bertugas di pesawat.'
         },
-        formula: 'Coret "of monarch butterflies" → patterns [Jamak] + have been.',
+        formula: 'Cavities + teeth cleaned → Dentist.',
         voiceWalkthrough:
-          'Jawabannya B, "have been". Subjek utama kalimat ini adalah "The migration patterns" yang jamak.'
-      },
-      {
-        id: 'bs1-q2',
-        level: 'Basic',
-        section: 'Structure',
-        skillTag: 'Indefinite Pronouns (Each / Every)',
-        type: 'Structure',
-        prompt:
-          'Each of the laboratory instruments _______ calibrated before the final experiment begins.',
-        translationId:
-          'Masing-masing instrumen laboratorium _______ dikalibrasi sebelum eksperimen akhir dimulai.',
-        hintId: 'Kata "Each" sebelum "of the..." selalu dihitung tunggal.',
-        options: [
-          { key: 'A', text: 'are' },
-          { key: 'B', text: 'were' },
-          { key: 'C', text: 'is' },
-          { key: 'D', text: 'have been' }
-        ],
-        correctKey: 'C',
-        breakdown: {
-          subject: 'Each (Indefinite Pronoun — selalu Singular)',
-          verb: 'is calibrated (Singular Passive Verb)',
-          trap: 'of the laboratory instruments (Pengecoh kata benda jamak)'
-        },
-        optionAnalysis: {
-          A: 'Salah: "are" untuk subjek jamak.',
-          B: 'Salah: "were" untuk subjek jamak lampau.',
-          C: 'BENAR: "Each" selalu dihitung tunggal (singular), pasangannya "is".',
-          D: 'Salah: "have been" bentuk jamak.'
-        },
-        formula: 'Each / Every + of + Plural Noun → Singular Verb (is / was / has).',
-        voiceWalkthrough:
-          'Jawabannya C, "is". Subjek aslinya adalah "Each" yang selalu dihitung tunggal.'
+          'Jawabannya B, "A dentist". Kata kunci "cavities filled" dan "teeth cleaned" merujuk pada dokter gigi.'
       }
     ]
   },
 
+  // --- BASIC: READING ---
   {
     id: 'basic-read-1',
     level: 'Basic',
@@ -438,7 +872,7 @@ const CURRICULUM = [
     section: 'Reading',
     code: 'R-1.1',
     moduleRef: 'Reading Skill 1–3',
-    title: 'Reading Basic: Main Idea, Stated Details & Pronoun Referents',
+    title: 'Reading Basic: Main Idea, Organization & Stated Details',
     shortTitle: 'Main Idea & Stated Details',
     category: 'Reading Comprehension',
     passage: {
@@ -449,18 +883,18 @@ const CURRICULUM = [
     paragraphs: [
       {
         id: 'p1',
-        heading: '1. Menemukan Ide Utama (Main Idea) & Detail Tersurat',
+        heading: '1. Strategi Main Idea & Stated Detail Questions',
         bodyId:
-          'Jawaban pertanyaan "What is the main topic/idea?" ditemukan dengan menggabungkan kalimat pertama dari setiap paragraf (Topic Sentences). Untuk soal Stated Detail ("According to the passage..."), pindai kata kunci pertanyaan lalu baca 1 kalimat utuh di sekitar kata kunci tersebut.',
+          'Untuk menjawab pertanyaan Main Idea ("What is the main topic/purpose?"), gabungkan kalimat pertama dari setiap paragraf (Topic Sentences) dan tolak opsi yang terlalu sempit (hanya membahas satu contoh kecil) atau terlalu luas. Untuk soal Stated Detail ("According to the passage..."), pindai kata kunci soal di teks lalu pilih opsi yang merupakan parafrase (pengungkapan ulang dengan sinonim) dari kalimat tersebut.',
         voiceText:
-          'Untuk soal Main Idea, gabungkan kalimat pertama dari setiap paragraf. Hindari pilihan jawaban yang terlalu sempit atau hanya menyebut satu contoh kecil.',
+          'Untuk soal Main Idea, gabungkan kalimat pertama dari setiap paragraf dan hindari jawaban yang hanya membahas satu contoh kecil.',
         englishRule:
-          'Main Idea = Topic Sentence Paragraf 1 + Topic Sentence Paragraf 2',
+          'Main Idea = Topic Sentence Paragraf 1 + Topic Sentence Paragraf 2  ||  Stated Detail = Sinonim dari Kalimat Teks',
         examples: [
           {
-            en: 'Paragraf 1 membahas sifat "cold light" bioluminescence, sedangkan Paragraf 2 memberi contoh fungsi bertahan hidup pada anglerfish, squid, dan lanternfish.',
-            id: 'Gabungan keduanya menghasilkan ide utama yang utuh dan akurat.',
-            highlight: 'Tolak opsi "Too Specific" & "Not Mentioned"'
+            en: 'Paragraf 1: Sifat "cold light" bioluminescence + Paragraf 2: Fungsi survival pada anglerfish, squid, dan lanternfish.',
+            id: 'Keduanya menyatu dalam opsi yang membahas sifat dan fungsi bertahan hidup bioluminesensi.',
+            highlight: 'Tolak opsi "Too Narrow" (hanya bahas 1 hewan)'
           }
         ]
       }
@@ -471,10 +905,9 @@ const CURRICULUM = [
         level: 'Basic',
         section: 'Reading',
         skillTag: 'Reading: Main Idea',
-        type: 'Reading Comprehension',
         prompt: 'What is the main topic of the passage "Bioluminescence in the Deep Ocean"?',
         translationId: 'Apa topik utama dari bacaan "Bioluminescence in the Deep Ocean"?',
-        hintId: 'Gabungkan ide utama paragraf 1 (sifat bioluminesensi) dan paragraf 2 (fungsi survival-nya).',
+        hintId: 'Gabungkan ide pokok paragraf 1 (sifat bioluminesensi) dan paragraf 2 (fungsi bertahan hidupnya).',
         options: [
           { key: 'A', text: 'How deep-sea anglerfish capture their prey' },
           { key: 'B', text: 'The efficiency of light bulbs compared to marine animals' },
@@ -486,131 +919,352 @@ const CURRICULUM = [
         ],
         correctKey: 'C',
         breakdown: {
-          subject: 'Paragraf 1: Sifat bioluminescence | Paragraf 2: Contoh fungsi bertahan hidup',
-          verb: 'Main Idea merangkum kedua paragraf',
+          subject: 'Paragraf 1: Sifat bioluminescence | Paragraf 2: Contoh fungsi survival',
+          verb: 'Main Idea merangkum keseluruhan bacaan',
           trap: 'Opsi A, B, D terlalu sempit (hanya detail kecil)'
         },
         optionAnalysis: {
           A: 'Salah (Too Narrow): Anglerfish hanya satu contoh.',
           B: 'Salah (Too Narrow): Bola lampu hanya perbandingan singkat.',
-          C: 'BENAR: Merangkum sifat cahaya bioluminesensi dan fungsi bertahan hidupnya.',
-          D: 'Salah (Too Narrow): Kedalaman 200 meter hanya latar belakang pembuka.'
+          C: 'BENAR: Merangkum sifat dan fungsi bertahan hidup bioluminesensi.',
+          D: 'Salah (Too Narrow): Kedalaman 200 meter hanya pembuka.'
         },
-        formula: 'Main Idea = Ide Paragraf 1 + Ide Paragraf 2.',
+        formula: 'Main Idea = Rangkuman Paragraf 1 + Paragraf 2.',
         voiceWalkthrough:
-          'Jawabannya C, karena opsi ini merangkum topik besar kedua paragraf secara menyeluruh.'
+          'Jawabannya C, karena opsi ini merangkum ide utama kedua paragraf secara utuh.'
       }
     ]
   },
 
-  // ==================== LEVEL 2: INTERMEDIATE ====================
   {
-    id: 'inter-listen-1',
-    level: 'Intermediate',
-    levelNum: 2,
-    section: 'Listening',
-    code: 'L-2.1',
-    moduleRef: 'Listening Skill 4–8',
-    title: 'Listening Intermediate: Passive Restatements, Wishes & Two-Part Verbs',
-    shortTitle: 'Passives, Wishes & Idioms',
-    category: 'Listening Comprehension (Part A)',
+    id: 'basic-read-2',
+    level: 'Basic',
+    levelNum: 1,
+    section: 'Reading',
+    code: 'R-1.2',
+    moduleRef: 'Reading Skill 5',
+    title: 'Reading Basic: Pronoun Referents (Menemukan Rujukan Kata Ganti)',
+    shortTitle: 'Pronoun Referents (It / They / Which)',
+    category: 'Reading Comprehension',
     passage: {
-      title: 'Mini Audio Drill: Implied Meaning & Idioms',
-      text: `(Man): It is too bad that you have to stay here and work during the school break.\n(Woman): I really wish I could go with you and the others to Palm Springs.\n(Narrator): What does the woman mean?`,
-      translationId: `(Pria): Sayang sekali kamu harus tinggal di sini dan bekerja selama libur sekolah.\n(Wanita): Aku benar-benar berharap aku bisa pergi bersamamu dan yang lainnya ke Palm Springs.\n(Narator): Apa maksud wanita tersebut?`
+      title: 'How Honeybees Communicate Distance and Direction',
+      text: `When a foraging honeybee discovers a rich patch of nectar-bearing flowers, she returns to the hive and performs an intricate figure-eight movement known as the waggle dance. By adjusting the angle of her dance relative to the vertical honeycomb, the bee indicates the exact direction of the food source in relation to the Sun. Meanwhile, the duration of the waggle run communicates how far away the blossoms are located; other worker bees observe these movements closely before flying out to harvest them.`,
+      translationId: `Ketika seekor lebah madu pencari makan menemukan petak bunga kaya nektar, ia kembali ke sarang dan melakukan gerakan angka delapan rumit yang dikenal sebagai tarian goyang (waggle dance). Dengan menyesuaikan sudut tariannya relatif terhadap sarang lebah vertikal, lebah tersebut menunjukkan arah pasti sumber makanan terhadap Matahari. Sementara itu, durasi gerakan goyang mengomunikasikan seberapa jauh lokasi bunga-bunga itu; lebah pekerja lainnya mengamati gerakan-gerakan ini dengan saksama sebelum terbang keluar untuk memanennya.`
     },
     paragraphs: [
       {
         id: 'p1',
-        heading: '1. Kalimat Pengandaian (Wishes) & Frasa Kata Kerja (Two-Part Verbs)',
+        heading: '1. Teknik Mundur Satu Kalimat untuk Pronoun Referents',
         bodyId:
-          'Dalam Listening Part A tingkat menengah, pernyataan dengan kata "wish" selalu bermakna KENYATAAN YANG BERLAWANAN: "I wish I could go" berarti dia TIDAK BISA pergi. Selain itu, waspadai frasa kata kerja idiomatik seperti "called off" (dibatalkan) atau "put off" (ditunda).',
+          'Pada soal "The word \'them\' in line 6 refers to...", jawaban HAMPIR SELALU berada SEBELUM kata ganti tersebut di kalimat yang sama atau satu kalimat sebelumnya. Cocokkan jumlahnya: "it / its" merujuk kata benda tunggal, sedangkan "they / them / their / these" merujuk kata benda jamak.',
         voiceText:
-          'Ingat aturan Listening Intermediate: kalimat yang memakai kata "wish" menyiratkan kenyataan yang berlawanan. Misalnya, "I wish I could go" berarti dia tidak bisa pergi.',
+          'Untuk soal Pronoun Referent, cari kata benda yang muncul sebelum kata ganti tersebut dan cocokkan jumlah tunggal atau jamaknya.',
         englishRule:
-          'I wish I could go → Reality: Unable to go  ||  called off = canceled  ||  put off = postponed',
+          'Cari kata benda SEBELUM pronoun → Cocokkan Singular (it) vs. Plural (they/them/these)',
         examples: [
           {
-            en: 'Woman: "Didn’t you hear that the meeting was called off?" → Meaning: The meeting was canceled.',
-            id: 'Ungkapan idiomatik "called off" berarti membatalkan acara.',
-            highlight: 'Two-part verb: call off = cancel'
+            en: '...how far away the blossoms are located; other worker bees observe these movements before flying out to harvest them.',
+            id: 'Kata "them" (jamak) merujuk pada "the blossoms" (bunga-bunga yang dipanen nektarnya), bukan "worker bees".',
+            highlight: 'them (Plural Object) → the blossoms (Plural Noun)'
           }
         ]
       }
     ],
     questions: [
       {
-        id: 'il1-q1',
-        level: 'Intermediate',
-        section: 'Listening',
-        skillTag: 'Listening: Wishes & Implied Meaning',
-        type: 'Listening Comprehension',
-        prompt:
-          'Audio Dialogue — Man: "Are you going to Palm Springs with us?" | Woman: "I really wish I could go with you and the others." | Question: What does the woman mean?',
-        translationId:
-          'Dialog Audio — Pria: "Apakah kamu akan pergi ke Palm Springs bersama kami?" | Wanita: "Aku benar-benar berharap aku bisa pergi bersamamu dan yang lainnya." | Pertanyaan: Apa maksud wanita itu?',
-        hintId: 'Pernyataan "wish + could" menunjukkan ketidakmampuan untuk ikut pada kenyataannya.',
+        id: 'br2-q1',
+        level: 'Basic',
+        section: 'Reading',
+        skillTag: 'Reading: Pronoun Referent',
+        prompt: 'In the passage above, the word "them" at the very end refers to:',
+        translationId: 'Pada bacaan di atas, kata "them" di bagian paling akhir merujuk pada:',
+        hintId: 'Apa yang dipanen ("harvest") oleh lebah pekerja di bunga tersebut?',
         options: [
-          { key: 'A', text: 'Maybe she will go with the others on the trip.' },
-          { key: 'B', text: 'She is unable to go on the trip.' },
-          { key: 'C', text: 'She is happy to be going on the trip.' },
-          { key: 'D', text: 'She already went to Palm Springs earlier.' }
+          { key: 'A', text: 'worker bees' },
+          { key: 'B', text: 'these movements' },
+          { key: 'C', text: 'the blossoms' },
+          { key: 'D', text: 'the vertical honeycomb' }
+        ],
+        correctKey: 'C',
+        breakdown: {
+          subject: 'Pronoun: "them" (Plural Object)',
+          verb: 'Action: "flying out to harvest them"',
+          trap: 'Worker bees tidak memanen gerakan ("movements"), melainkan bunga ("blossoms")'
+        },
+        optionAnalysis: {
+          A: 'Salah: Worker bees adalah subjek yang memanen.',
+          B: 'Salah: Gerakan tari tidak bisa dipanen.',
+          C: 'BENAR: "the blossoms" (jamak) adalah objek yang dipanen lebah.',
+          D: 'Salah: "honeycomb" adalah kata benda tunggal.'
+        },
+        formula: 'Pronoun jamak "them" + kata kerja "harvest" → the blossoms.',
+        voiceWalkthrough:
+          'Jawabannya C, "the blossoms", karena bunga-bunga itulah yang dipanen oleh para lebah pekerja.'
+      }
+    ]
+  },
+
+  // ==========================================================================
+  // LEVEL 2: INTERMEDIATE (CORE GRAMMAR & COMPREHENSION)
+  // ==========================================================================
+
+  // --- INTERMEDIATE: STRUCTURE & WRITTEN EXPRESSION ---
+  {
+    id: 'inter-struct-passive',
+    level: 'Intermediate',
+    levelNum: 2,
+    section: 'Structure',
+    code: 'S-2.1',
+    moduleRef: 'Structure Skill 37–38',
+    title: 'Active vs. Passive Voice (Be + V3 & Agent "By")',
+    shortTitle: 'Passive Voice (Be + V3)',
+    category: 'Structure & Written Expression',
+    paragraphs: [
+      {
+        id: 'p1',
+        heading: '1. Rumus Wajib Passive Voice & Kapan Kalimat Harus Pasif',
+        bodyId:
+          'Kalimat pasif dalam bahasa Inggris WAJIB memiliki dua unsur: kata kerja bantu [be: is, am, are, was, were, be, been, being] + [Past Participle (V3)]. Kalimat wajib berbentuk pasif apabila: 1) Subjeknya adalah benda mati/konsep yang tidak bisa melakukan aksi sendiri (misalnya: "The bridge was built", bukan "The bridge built"), atau 2) Terdapat kata depan pelaku "by + agent" setelah kata kerja.',
+        voiceText:
+          'Ingat rumus mutlak kalimat pasif: wajib ada "to be" diikuti V3. Jika terdapat kata "by" sebagai pelaku aksi setelah kata kerja, kalimat tersebut hampir pasti berbentuk pasif.',
+        englishRule:
+          'Passive Formula: [Subject] + [is/are/was/were/been/be] + [V3] + (by + Agent)',
+        examples: [
+          {
+            en: 'The theory of general relativity was formulated by Albert Einstein in 1915.',
+            id: 'Teori relativitas umum dirumuskan oleh Albert Einstein pada tahun 1915. (Ada pelaku "by Albert Einstein" → wajib "was formulated").',
+            highlight: 'Clue "by Albert Einstein" → Passive: was formulated'
+          },
+          {
+            en: 'New safety regulations must be implemented before the factory reopens.',
+            id: 'Peraturan keselamatan baru harus diterapkan sebelum pabrik dibuka kembali. (Modal "must" + "be" + V3).',
+            highlight: 'Modal Passive: must + be + V3 (implemented)'
+          }
+        ]
+      }
+    ],
+    questions: [
+      {
+        id: 'is-pas-1',
+        level: 'Intermediate',
+        section: 'Structure',
+        skillTag: 'Active vs. Passive Voice',
+        prompt:
+          'The first successful telegraph message _______ across the Atlantic Ocean in 1858.',
+        translationId:
+          'Pesan telegraf pertama yang berhasil _______ melintasi Samudra Atlantik pada tahun 1858.',
+        hintId: 'Subjeknya "The first successful telegraph message" (pesan telegraf — tidak bisa mengirim dirinya sendiri) dan waktunya lampau ("in 1858")!',
+        options: [
+          { key: 'A', text: 'transmitted' },
+          { key: 'B', text: 'was transmitted' },
+          { key: 'C', text: 'has transmitted' },
+          { key: 'D', text: 'transmitting' }
         ],
         correctKey: 'B',
         breakdown: {
-          subject: 'Key Structure: "I really wish I could go"',
-          verb: 'Implied Reality: She cannot go (unable to go)',
-          trap: 'Jangan tertipu kata "go with you" secara harfiah'
+          subject: 'The first successful telegraph message (Subjek benda menerima aksi)',
+          verb: 'was transmitted (Simple Past Passive)',
+          trap: 'Opsi A ("transmitted") adalah bentuk aktif, padahal pesan dikirimkan (pasif)'
         },
         optionAnalysis: {
-          A: 'Salah: Dia tidak punya kemungkinan untuk ikut.',
-          B: 'BENAR: "Wish I could go" menyiratkan bahwa dia tidak bisa ikut perjalanan tersebut.',
-          C: 'Salah: Bertentangan dengan makna "wish".',
-          D: 'Salah: Tidak disebutkan.'
+          A: 'Salah: Bentuk aktif (seolah-olah pesan itu mengirim sesuatu).',
+          B: 'BENAR: Simple Past Passive ("was" + V3 "transmitted") cocok untuk subjek benda dan tahun 1858.',
+          C: 'Salah: Aktif dan salah tense karena ada "in 1858".',
+          D: 'Salah: Participle tanpa auxiliary verb.'
         },
-        formula: 'Wish + could + V1 → Unable to + V1.',
+        formula: 'Benda mati sebagai Subject + Tahun Lampau → was/were + V3.',
         voiceWalkthrough:
-          'Jawabannya B. Ungkapan "I really wish I could go" menyiratkan kenyataan bahwa dia tidak bisa ikut pergi.'
+          'Jawabannya B, "was transmitted". Subjek kalimat adalah pesan telegraf yang dikirimkan secara pasif pada tahun 1858.'
+      },
+      {
+        id: 'is-pas-2',
+        level: 'Intermediate',
+        section: 'Structure',
+        skillTag: 'Passive Voice Error Identification',
+        prompt:
+          'Identify the error: Several (A) rare manuscripts (B) preserved in the monastery library (C) were wrote by medieval scholars during the (D) twelfth century.',
+        translationId:
+          'Identifikasi kesalahan: Beberapa naskah langka yang disimpan di perpustakaan biara ditulis oleh para sarjana abad pertengahan selama abad kedua belas.',
+        hintId: 'Perhatikan bentuk kata kerja setelah "were" pada opsi C! Apa bentuk V3 dari "write"?',
+        options: [
+          { key: 'A', text: '(A) rare manuscripts' },
+          { key: 'B', text: '(B) preserved' },
+          { key: 'C', text: '(C) were wrote → seharusnya V3 "were written"' },
+          { key: 'D', text: '(D) twelfth century' }
+        ],
+        correctKey: 'C',
+        breakdown: {
+          subject: 'Several rare manuscripts',
+          verb: 'were wrote → Wajib V3 "were written"',
+          trap: 'Menggunakan V2 ("wrote") setelah "were", padahal passive wajib V3 ("written")'
+        },
+        optionAnalysis: {
+          A: 'Benar: Kata benda jamak sudah tepat.',
+          B: 'Benar: Past participle penjelas "manuscripts".',
+          C: 'SALAH (Kunci Jawaban): Setelah "were", kata kerja wajib bentuk V3 ("written"), bukan V2 ("wrote").',
+          D: 'Benar: Bilangan bertingkat "twelfth" sudah tepat.'
+        },
+        formula: 'Passive Voice = was / were + V3 (written), BUKAN V2 (wrote).',
+        voiceWalkthrough:
+          'Yang salah adalah C, "were wrote". Dalam kalimat pasif, setelah "were" wajib menggunakan bentuk ketiga V3 yaitu "written".'
       }
     ]
   },
 
   {
-    id: 'inter-struct-1',
+    id: 'inter-struct-gerund',
     level: 'Intermediate',
     levelNum: 2,
     section: 'Structure',
-    code: 'S-2.1',
-    moduleRef: 'Structure Skill 9–14',
-    title: 'Structure Intermediate: Adjective/Noun Clauses, Parallel & Double Comparative',
-    shortTitle: 'Clauses, Parallel & Comparative',
+    code: 'S-2.2',
+    moduleRef: 'Structure Skill 46–48',
+    title: 'Gerund (V-ing) vs. To-Infinitive (to + V1) & Preposition + V-ing',
+    shortTitle: 'Gerund (V-ing) vs. Infinitive',
     category: 'Structure & Written Expression',
     paragraphs: [
       {
         id: 'p1',
-        heading: '1. Aturan Koma Adjective Clause & Double Comparative',
+        heading: '1. Hukum Mutlak Preposisi + Gerund (V-ing) & Kata Kerja Khusus',
         bodyId:
-          'Jika terdapat tanda koma sebelum relative pronoun, DILARANG menggunakan "that"—wajib menggunakan "which" (untuk benda) atau "who/whom" (untuk orang). Selain itu, kuasai pola Double Comparative: "The + comparative (-er/more) + S + V, the + comparative (-er/more) + S + V".',
+          'Aturan paling sering keluar di TOEFL: 1) Setelah PREPOSISI apa pun (in, on, at, of, for, by, without, after, before, despite, instead of), kata kerja WAJIB berbentuk Gerund (V-ing) dan DILARANG memakai "to + V1" (termasuk frasa yang mengandung "to" sebagai preposisi seperti: look forward to, be accustomed to, be used to, object to, contribute to + V-ing!). 2) Kata kerja tertentu wajib diikuti Gerund (enjoy, avoid, consider, recommend, suggest, postpone, delay, finish, quit, mind, admit, deny + V-ing). 3) Kata kerja tertentu wajib diikuti To-Infinitive (agree, decide, plan, hope, expect, refuse, manage, afford, fail, intend + to V1).',
         voiceText:
-          'Ingat dua aturan penting level Intermediate: setelah tanda koma wajib memakai "which" dan dilarang memakai "that". Kedua, pola Double Comparative selalu diawali "The" di kedua bagian kalimat.',
+          'Hafalkan aturan penting Gerund: setiap kata kerja setelah preposisi wajib berbentuk V-ing, termasuk frasa jebakan seperti "look forward to", "be accustomed to", dan "contribute to".',
         englishRule:
-          '[Noun] + , + WHICH + [Verb] (JANGAN ", that"!)  ||  The + [-er/more] ..., THE + [-er/more] ...',
+          'Preposition + V-ing  ||  look forward to / be used to / contribute to + V-ing  ||  enjoy / avoid / consider / suggest + V-ing',
         examples: [
           {
-            en: 'Geothermal energy, which harnesses heat from beneath the Earth’s crust, provides reliable power.',
-            id: 'Energi panas bumi, yang memanfaatkan panas dari bawah kerak Bumi, menyediakan daya yang andal.',
-            highlight: 'Setelah koma wajib memakai "which"'
+            en: 'Wetlands contribute to filtering pollutants and preventing coastal flooding.',
+            id: 'Lahan basah berkontribusi menyaring polutan dan mencegah banjir pesisir. ("contribute to" diikuti V-ing "filtering"!).',
+            highlight: 'contribute to + V-ing (filtering) — BUKAN "to filter"!'
+          },
+          {
+            en: 'Astronomers avoid pointing optical telescopes directly toward the Sun.',
+            id: 'Para astronom menghindari mengarahkan teleskop optik langsung ke Matahari. ("avoid" wajib + V-ing).',
+            highlight: 'avoid / enjoy / consider / recommend + V-ing'
           }
         ]
       }
     ],
     questions: [
       {
-        id: 'is1-q1',
+        id: 'is-ger-1',
+        level: 'Intermediate',
+        section: 'Structure',
+        skillTag: 'Gerund after Preposition ("to" as Preposition)',
+        prompt:
+          'Researchers are looking forward to _______ the preliminary results of the clinical trial next month.',
+        translationId:
+          'Para peneliti menantikan untuk menerbitkan hasil awal uji klinis tersebut bulan depan.',
+        hintId: 'Pada frasa "look forward to", kata "to" adalah PREPOSISI! Kata kerja setelah preposisi wajib V-ing.',
+        options: [
+          { key: 'A', text: 'publish' },
+          { key: 'B', text: 'publishing' },
+          { key: 'C', text: 'published' },
+          { key: 'D', text: 'be published' }
+        ],
+        correctKey: 'B',
+        breakdown: {
+          subject: 'Researchers',
+          verb: 'are looking forward to + Gerund (publishing)',
+          trap: 'Banyak peserta terkecoh memilih V1 ("publish") karena melihat kata "to"'
+        },
+        optionAnalysis: {
+          A: 'Salah: "to" di sini bukan infinitive marker, melainkan preposisi.',
+          B: 'BENAR: "look forward to" wajib diikuti Gerund (V-ing): "publishing".',
+          C: 'Salah: Past participle tidak tepat.',
+          D: 'Salah: Bentuk infinitive pasif tidak sesuai setelah preposisi "to".'
+        },
+        formula: 'look forward to / be accustomed to / object to + V-ing (Gerund).',
+        voiceWalkthrough:
+          'Jawabannya B, "publishing". Dalam ungkapan "look forward to", kata "to" berfungsi sebagai preposisi sehingga wajib diikuti Gerund V-ing.'
+      },
+      {
+        id: 'is-ger-2',
+        level: 'Intermediate',
+        section: 'Structure',
+        skillTag: 'Verbs Followed by Gerund',
+        prompt:
+          'Identify the error: Environmental engineers (A) recommend (B) to install solar panels on commercial rooftops (C) to reduce peak electricity (D) demand.',
+        translationId:
+          'Identifikasi kesalahan: Insinyur lingkungan merekomendasikan pemasangan panel surya di atap komersial untuk mengurangi permintaan listrik puncak.',
+        hintId: 'Kata kerja "recommend" (seperti enjoy, avoid, suggest, consider) diikuti Gerund (V-ing) atau To-Infinitive?',
+        options: [
+          { key: 'A', text: '(A) Environmental engineers' },
+          { key: 'B', text: '(B) to install → seharusnya Gerund "installing"' },
+          { key: 'C', text: '(C) to reduce' },
+          { key: 'D', text: '(D) demand' }
+        ],
+        correctKey: 'B',
+        breakdown: {
+          subject: 'Environmental engineers',
+          verb: 'recommend + installing (Gerund)',
+          trap: 'Kata kerja "recommend" tidak boleh diikuti "to + V1", wajib "V-ing"'
+        },
+        optionAnalysis: {
+          A: 'Benar: Subjek jamak sesuai dengan verb "recommend".',
+          B: 'SALAH (Kunci Jawaban): "recommend" wajib diikuti Gerund "installing".',
+          C: 'Benar: "to reduce" menyatakan tujuan (in order to reduce).',
+          D: 'Benar: Kata benda objek sudah tepat.'
+        },
+        formula: 'recommend / suggest / enjoy / avoid / consider + V-ing.',
+        voiceWalkthrough:
+          'Yang salah adalah B, "to install". Kata kerja "recommend" wajib diikuti bentuk Gerund V-ing yaitu "installing".'
+      }
+    ]
+  },
+
+  {
+    id: 'inter-struct-clauses',
+    level: 'Intermediate',
+    levelNum: 2,
+    section: 'Structure',
+    code: 'S-2.3',
+    moduleRef: 'Structure Skill 6–12 & 24–29',
+    title: 'Adjective/Noun/Adverb Clauses, Parallel Structure & Double Comparative',
+    shortTitle: 'Clauses, Parallel & Double Comparative',
+    category: 'Structure & Written Expression',
+    paragraphs: [
+      {
+        id: 'p1',
+        heading: '1. Adjective Clauses (Aturan Koma ", which") & Noun Clauses',
+        bodyId:
+          'Jika terdapat tanda koma sebelum relative pronoun, DILARANG keras menggunakan "that"—wajib menggunakan "which" (benda) atau "who/whom" (orang). Untuk kepemilikan, gunakan "whose + Noun". Pada Noun Clause yang menjadi subjek kalimat ("What he said surprised us"), pastikan hanya ada satu Main Verb di luar klausa tersebut.',
+        voiceText:
+          'Setelah tanda koma dalam Adjective Clause, wajib memakai "which" untuk benda dan dilarang memakai "that".',
+        englishRule:
+          '[Noun] + , + WHICH + [Verb] (JANGAN ", that"!)  ||  [Noun] + WHOSE + [Noun] + [Verb]',
+        examples: [
+          {
+            en: 'Geothermal energy, which harnesses heat from beneath the Earth’s crust, provides reliable power.',
+            id: 'Energi panas bumi, yang memanfaatkan panas dari bawah kerak Bumi, menyediakan daya yang andal.',
+            highlight: 'Setelah koma wajib "which"'
+          }
+        ]
+      },
+      {
+        id: 'p2',
+        heading: '2. Parallel Structure & Double Comparative (The -er ..., the -er ...)',
+        bodyId:
+          'Kata-kata yang dihubungkan oleh and, but, or maupun Paired Conjunctions (both...and, either...or, neither...nor, not only...but also) WAJIB memiliki kelas kata yang sama (Noun + Noun, Adj + Adj, V-ing + V-ing). Selain itu, hafalkan pola Double Comparative: "The + comparative (-er/more) + S + V, the + comparative (-er/more) + S + V".',
+        voiceText:
+          'Pastikan semua elemen yang dihubungkan "and", "or", atau "not only... but also" memiliki kelas kata yang sejajar.',
+        englishRule:
+          'Noun, Noun, and Noun  ||  both X and Y  ||  The + [-er/more] ..., THE + [-er/more] ...',
+        examples: [
+          {
+            en: 'The greater the population density in a city, the more urgent the demand for mass transit.',
+            id: 'Semakin besar kepadatan penduduk di sebuah kota, semakin mendesak permintaan transportasi massal.',
+            highlight: 'Double Comparative: The greater ..., the more urgent ...'
+          }
+        ]
+      }
+    ],
+    questions: [
+      {
+        id: 'is-cl-1',
         level: 'Intermediate',
         section: 'Structure',
         skillTag: 'Non-Restrictive Which',
-        type: 'Structure',
         prompt:
           'Geothermal energy, _______ harnesses heat from beneath the Earth’s crust, provides reliable baseload power.',
         translationId:
@@ -629,60 +1283,201 @@ const CURRICULUM = [
           trap: 'Aturan Koma: ", that" selalu salah!'
         },
         optionAnalysis: {
-          A: 'Salah: "that" dilarang keras setelah tanda koma.',
-          B: 'BENAR: "which" sah digunakan setelah tanda koma.',
+          A: 'Salah: "that" dilarang setelah tanda koma.',
+          B: 'BENAR: "which" wajib dipakai setelah tanda koma untuk benda.',
           C: 'Salah: "what" tidak boleh didahului kata benda.',
           D: 'Salah: "it" bukan connector.'
         },
         formula: '[Noun] + , + WHICH + [Verb] + , + [Main Verb].',
         voiceWalkthrough:
-          'Jawabannya B, "which". Setelah tanda koma, aturan mutlaknya adalah wajib memakai "which" dan dilarang memakai "that".'
+          'Jawabannya B, "which". Setelah tanda koma, aturan mutlaknya adalah wajib memakai "which".'
       },
       {
-        id: 'is1-q2',
+        id: 'is-cl-2',
         level: 'Intermediate',
         section: 'Structure',
-        skillTag: 'Double Comparative',
-        type: 'Structure',
+        skillTag: 'Parallel Structure',
         prompt:
-          'The greater the population density in a metropolitan area, _______ the demand for efficient mass transit.',
+          'Identify the error: Successful (A) entrepreneurs must be (B) creative, (C) adaptable, and (D) have persistence when facing market uncertainty.',
         translationId:
-          'Semakin besar kepadatan penduduk di wilayah metropolitan, _______ permintaan akan transportasi massal yang efisien.',
-        hintId: 'Lihat pola awal kalimat: "The greater...". Pasangannya setelah koma wajib "the + comparative"!',
+          'Identifikasi kesalahan: Pengusaha yang sukses harus kreatif, mudah beradaptasi, dan gigih saat menghadapi ketidakpastian pasar.',
+        hintId: 'Lihat deretan setelah "must be": creative (Adjective), adaptable (Adjective), dan ... (harus Adjective juga!).',
         options: [
-          { key: 'A', text: 'the more urgent' },
-          { key: 'B', text: 'more urgent' },
-          { key: 'C', text: 'the most urgent' },
-          { key: 'D', text: 'urgently' }
+          { key: 'A', text: '(A) Successful' },
+          { key: 'B', text: '(B) creative' },
+          { key: 'C', text: '(C) adaptable' },
+          { key: 'D', text: '(D) have persistence → seharusnya Adjective "persistent"' }
         ],
-        correctKey: 'A',
+        correctKey: 'D',
         breakdown: {
-          subject: 'Double Comparative Structure',
-          verb: 'Elliptical linking verb ("is")',
-          trap: 'Jangan pilih C ("the most urgent" = superlative) atau B (tanpa "the")!'
+          subject: 'Successful entrepreneurs',
+          verb: 'must be + Adj, Adj, and Adj',
+          trap: 'Memasukkan frasa verba "have persistence" ke dalam deretan kata sifat'
         },
         optionAnalysis: {
-          A: 'BENAR: Memenuhi rumus Double Comparative: "The greater ..., the more urgent ...".',
-          B: 'Salah: Kurang kata sandang wajib "the".',
-          C: 'Salah: Menggunakan superlative ("most").',
-          D: 'Salah: Berupa adverb tunggal.'
+          A: 'Benar: Adjective penjelas "entrepreneurs".',
+          B: 'Benar: Adjective pertama.',
+          C: 'Benar: Adjective kedua.',
+          D: 'SALAH (Kunci Jawaban): Wajib sejajar menjadi Adjective "persistent".'
         },
-        formula: 'The + [Comparative 1], THE + [Comparative 2].',
+        formula: 'Parallel Adjectives: creative (Adj), adaptable (Adj), and persistent (Adj).',
         voiceWalkthrough:
-          'Jawabannya A, "the more urgent". Pola Double Comparative selalu memasangkan "The greater" dengan "the more urgent".'
+          'Yang salah adalah D, "have persistence". Agar sejajar dengan "creative" dan "adaptable", wajib menggunakan kata sifat "persistent".'
       }
     ]
   },
 
+  // --- INTERMEDIATE: LISTENING ---
+  {
+    id: 'inter-listen-1',
+    level: 'Intermediate',
+    levelNum: 2,
+    section: 'Listening',
+    code: 'L-2.1',
+    moduleRef: 'Listening Skill 5–10',
+    title: 'Listening Intermediate: Passives, Double Negatives & Wishes',
+    shortTitle: 'Passives, Double Negatives & Wishes',
+    category: 'Listening Comprehension (Part A)',
+    passage: {
+      title: 'Mini Audio Drill: Implied Meaning & Negatives',
+      text: `(Man): It is too bad that you have to stay here and work during the school break.\n(Woman): I really wish I could go with you and the others to Palm Springs.\n(Narrator): What does the woman mean?`,
+      translationId: `(Pria): Sayang sekali kamu harus tinggal di sini dan bekerja selama libur sekolah.\n(Wanita): Aku benar-benar berharap aku bisa pergi bersamamu dan yang lainnya ke Palm Springs.\n(Narator): Apa maksud wanita tersebut?`
+    },
+    paragraphs: [
+      {
+        id: 'p1',
+        heading: '1. Passive Restatements, Double Negatives & Wishes',
+        bodyId:
+          'Pada Listening Intermediate: 1) Jika pembicara mengucapkan kalimat aktif ("She opened a checking account"), pilihan jawaban yang benar sering diubah menjadi PASIF ("A checking account was opened"). 2) Dua kata negatif dalam satu kalimat ("not uncommon", "didn’t fail to", "nobody wasn’t") saling meniadakan sehingga bermakna POSITIF ("common", "succeeded"). 3) Kalimat "wish" selalu bermakna KENYATAAN YANG BERLAWANAN ("I wish I could go" = tidak bisa pergi).',
+        voiceText:
+          'Dalam Listening Intermediate, kalimat aktif sering diparafrase menjadi pasif, double negative bermakna positif, dan kalimat "wish" selalu menyiratkan kenyataan yang berlawanan.',
+        englishRule:
+          'Active ↔ Passive  ||  not uncommon = common (Positive)  ||  I wish I could go = Cannot go',
+        examples: [
+          {
+            en: 'Woman: "It is not impossible for us to finish the report tonight." → Meaning: It is possible to finish it.',
+            id: 'Double negative "not impossible" bermakna positif yaitu "possible" (mungkin).',
+            highlight: 'not + im- (Double Negative) = Positive'
+          }
+        ]
+      }
+    ],
+    questions: [
+      {
+        id: 'il1-q1',
+        level: 'Intermediate',
+        section: 'Listening',
+        skillTag: 'Listening: Wishes & Implied Meaning',
+        prompt:
+          'Audio Dialogue — Man: "Are you going to Palm Springs with us?" | Woman: "I really wish I could go with you and the others." | Question: What does the woman mean?',
+        translationId:
+          'Dialog Audio — Pria: "Apakah kamu akan pergi ke Palm Springs bersama kami?" | Wanita: "Aku benar-benar berharap aku bisa pergi bersamamu dan yang lainnya." | Pertanyaan: Apa maksud wanita itu?',
+        hintId: 'Pernyataan "wish + could" menunjukkan ketidakmampuan untuk ikut pada kenyataannya.',
+        options: [
+          { key: 'A', text: 'Maybe she will go with the others on the trip.' },
+          { key: 'B', text: 'She is unable to go on the trip.' },
+          { key: 'C', text: 'She is happy to be going on the trip.' },
+          { key: 'D', text: 'She already went to Palm Springs earlier.' }
+        ],
+        correctKey: 'B',
+        breakdown: {
+          subject: 'Key Structure: "I really wish I could go"',
+          verb: 'Implied Reality: She cannot go (unable to go)',
+          trap: 'Jangan tertipu kata "go with you" secara harfiah'
+        },
+        optionAnalysis: {
+          A: 'Salah: Dia tidak bisa ikut.',
+          B: 'BENAR: "Wish I could go" menyiratkan bahwa dia tidak bisa pergi.',
+          C: 'Salah: Bertentangan dengan makna "wish".',
+          D: 'Salah: Tidak disebutkan.'
+        },
+        formula: 'Wish + could + V1 → Unable to + V1.',
+        voiceWalkthrough:
+          'Jawabannya B. Ungkapan "I really wish I could go" menyiratkan kenyataan bahwa dia tidak bisa ikut pergi.'
+      }
+    ]
+  },
+
+  {
+    id: 'inter-listen-2',
+    level: 'Intermediate',
+    levelNum: 2,
+    section: 'Listening',
+    code: 'L-2.2',
+    moduleRef: 'Listening Skill 11–15',
+    title: 'Listening Intermediate: Agreement, Uncertainty & Emphatic Surprise',
+    shortTitle: 'Agreement, Uncertainty & Surprise',
+    category: 'Listening Comprehension (Part A)',
+    passage: {
+      title: 'Mini Audio Drill: Idiomatic Agreement & Surprise',
+      text: `(Man): I think that the professor’s exam was much harder than we expected.\n(Woman): You can say that again!\n(Narrator): What does the woman mean?`,
+      translationId: `(Pria): Menurutku ujian profesor itu jauh lebih sulit daripada yang kita perkirakan.\n(Wanita): Aku sangat setuju denganmu!\n(Narator): Apa maksud wanita tersebut?`
+    },
+    paragraphs: [
+      {
+        id: 'p1',
+        heading: '1. Ungkapan Setuju (Agreement), Keraguan & Keterkejutan (Surprise)',
+        bodyId:
+          'Hafalkan idiom persetujuan TOEFL Listening: "So do I", "Neither do I", "I’ll say!", "You can say that again!", dan "Isn’t it!" (semuanya berarti SANGAT SETUJU, bukan menyuruh mengulang kalimat!). Sementara itu, penekanan kata kerja bantu seperti "Then you DID pass the exam!" menunjukkan rasa terkejut karena sebelumnya pembicara mengira lawannya gagal.',
+        voiceText:
+          'Ungkapan idiomatik seperti "You can say that again!" atau "I’ll say!" dalam Listening TOEFL berarti pembicara kedua sangat setuju dengan pendapat pembicara pertama.',
+        englishRule:
+          'You can say that again! = I’ll say! = So do I = Strongly Agree  ||  Then you DID pass! = Surprised',
+        examples: [
+          {
+            en: 'Man: "This library is way too noisy to study." | Woman: "I’ll say!" → Meaning: She completely agrees with him.',
+            id: '"I’ll say!" adalah idiom persetujuan penuh dalam bahasa Inggris Amerika.',
+            highlight: 'I’ll say! = You can say that again! = Agree completely'
+          }
+        ]
+      }
+    ],
+    questions: [
+      {
+        id: 'il2-q1',
+        level: 'Intermediate',
+        section: 'Listening',
+        skillTag: 'Listening: Expressions of Agreement',
+        prompt:
+          'Audio Dialogue — Man: "The traffic on the highway this morning was unbelievable." | Woman: "You can say that again!" | Question: What does the woman mean?',
+        translationId:
+          'Dialog Audio — Pria: "Lalu lintas di jalan tol pagi ini benar-benar luar biasa macet." | Wanita: "Aku sangat sependapat denganmu!" | Pertanyaan: Apa maksud wanita itu?',
+        hintId: '"You can say that again!" adalah idiom persetujuan kuat, bukan perintah mengulang ucapan.',
+        options: [
+          { key: 'A', text: 'She did not hear what the man said.' },
+          { key: 'B', text: 'She wants the man to repeat his story.' },
+          { key: 'C', text: 'She strongly agrees with the man about the traffic.' },
+          { key: 'D', text: 'She took a different road to avoid traffic.' }
+        ],
+        correctKey: 'C',
+        breakdown: {
+          subject: 'Idiom: "You can say that again!"',
+          verb: 'Meaning: Strong agreement',
+          trap: 'Opsi B adalah jebakan arti harfiah ("repeat")'
+        },
+        optionAnalysis: {
+          A: 'Salah: Dia mendengar dengan jelas.',
+          B: 'Salah: Jebakan terjemahan harfiah kata "say that again".',
+          C: 'BENAR: "You can say that again!" bermakna persetujuan penuh.',
+          D: 'Salah: Tidak disebutkan.'
+        },
+        formula: 'You can say that again! = Strongly agrees.',
+        voiceWalkthrough:
+          'Jawabannya C. Ungkapan "You can say that again!" adalah idiom persetujuan penuh dalam bahasa Inggris.'
+      }
+    ]
+  },
+
+  // --- INTERMEDIATE: READING ---
   {
     id: 'inter-read-1',
     level: 'Intermediate',
     levelNum: 2,
     section: 'Reading',
     code: 'R-2.1',
-    moduleRef: 'Reading Skill 4–7',
-    title: 'Reading Intermediate: Vocabulary in Context & Unstated Details (NOT / EXCEPT)',
-    shortTitle: 'Vocab Context & NOT/EXCEPT',
+    moduleRef: 'Reading Skill 4 & 8–11',
+    title: 'Reading Intermediate: Unstated Details (NOT/EXCEPT) & Vocabulary in Context',
+    shortTitle: 'NOT/EXCEPT & Vocab in Context',
     category: 'Reading Comprehension',
     passage: {
       title: 'The Architecture of Ancient Roman Aqueducts',
@@ -694,15 +1489,15 @@ const CURRICULUM = [
         id: 'p1',
         heading: '1. Menebak Kosakata dari Konteks & Soal NOT / EXCEPT',
         bodyId:
-          'Saat ditanya arti kata sulit seperti "subterranean" atau "meticulously", baca petunjuk kontras atau penjelas di kalimat yang sama ("not of towering arched bridges, but of subterranean channels" → berarti di bawah tanah / underground). Untuk soal "Which of the following is NOT mentioned?", eliminasi 3 opsi yang benar-benar ada di teks.',
+          'Saat ditanya arti kata sulit seperti "subterranean" atau "meticulously", gunakan petunjuk kontras, contoh, atau imbuhan dalam kalimat yang sama ("not of towering arched bridges, but of subterranean channels" → berarti di bawah tanah / underground). Untuk soal "Which of the following is NOT mentioned?", eliminasi 3 opsi yang benar-benar ada di teks dan pilih 1 opsi yang salah atau tidak disebutkan.',
         voiceText:
           'Gunakan petunjuk kontras dalam kalimat untuk menebak kosakata akademik. Kata "subterranean" dikontraskan dengan jembatan tinggi, sehingga artinya adalah bawah tanah atau "underground".',
         englishRule:
-          'Kontras: "not towering bridges, but subterranean channels" → subterranean = underground',
+          'Kontras: "not towering bridges, but subterranean channels" → subterranean = underground  ||  Soal EXCEPT = Pilih yang TIDAK ada di teks',
         examples: [
           {
-            en: 'Kata "meticulously" diikuti frasa "dropping just a few centimeters every hundred meters", yang menunjukkan ketelitian tinggi (carefully).',
-            id: 'Konteks kalimat selalu memberi definisi terselubung bagi kosakata sulit.',
+            en: 'Kata "meticulously" diikuti frasa "dropping just a few centimeters every hundred meters", menunjukkan ketelitian tinggi (carefully).',
+            id: 'Konteks kalimat selalu memberi petunjuk definisi bagi kosakata sulit.',
             highlight: 'meticulously = carefully / precisely'
           }
         ]
@@ -714,7 +1509,6 @@ const CURRICULUM = [
         level: 'Intermediate',
         section: 'Reading',
         skillTag: 'Reading: Vocabulary in Context',
-        type: 'Reading Comprehension',
         prompt: 'The word "subterranean" in paragraph 1 is closest in meaning to:',
         translationId: 'Kata "subterranean" pada paragraf 1 memiliki makna paling dekat dengan:',
         hintId: 'Lihat kontrasnya di paragraf 1: bukan jembatan yang menjulang tinggi di atas, melainkan...',
@@ -733,7 +1527,7 @@ const CURRICULUM = [
         optionAnalysis: {
           A: 'BENAR: "subterranean" berarti di bawah permukaan tanah ("underground").',
           B: 'Salah: "elevated" berarti tinggi/di atas.',
-          C: 'Salah: Akuaduk Romawi dibangun permanen.',
+          C: 'Salah: Akuaduk Romawi bersifat permanen.',
           D: 'Salah: Tidak sesuai konteks.'
         },
         formula: 'Sub- (under) + terra (earth) = underground.',
@@ -743,76 +1537,11 @@ const CURRICULUM = [
     ]
   },
 
-  // ===================== LEVEL 3: ADVANCE (550+) =====================
-  {
-    id: 'adv-listen-1',
-    level: 'Advance',
-    levelNum: 3,
-    section: 'Listening',
-    code: 'L-3.1',
-    moduleRef: 'Listening Skill 18–27',
-    title: 'Listening Advance (550+): Long Conversations & Academic Talks (Part B & C)',
-    shortTitle: 'Part B & C Academic Talks',
-    category: 'Listening Comprehension (550+)',
-    passage: {
-      title: 'Mini-Lecture Transcript: The Architecture of Termite Mounds (Part C)',
-      text: `(Professor): Today in environmental biology, we are examining how African compass termites regulate internal temperatures without modern air conditioning. These insects construct towering clay mounds—sometimes reaching six meters high—aligned strictly along a north-south axis. Because the broad eastern and western faces absorb solar heat during the cooler morning and late afternoon hours, while only the narrow northern edge faces the intense midday sun, the interior nest remains remarkably stable at around 30 degrees Celsius.`,
-      translationId: `(Profesor): Hari ini dalam biologi lingkungan, kita mengkaji bagaimana rayap kompas Afrika mengatur suhu internal tanpa penyejuk udara modern. Serangga ini membangun gundukan tanah liat menjulang—terkadang mencapai tinggi enam meter—yang disejajarkan secara ketat sepanjang poros utara-selatan. Karena sisi timur dan barat yang lebar menyerap panas matahari selama pagi yang lebih sejuk dan sore hari, sementara hanya tepi utara yang sempit menghadap matahari tengah hari yang terik, sarang bagian dalam tetap sangat stabil pada suhu sekitar 30 derajat Celcius.`
-    },
-    paragraphs: [
-      {
-        id: 'p1',
-        heading: '1. Strategi Antisipasi Pilihan & Urutan Jawaban Part B dan C',
-        bodyId:
-          'Dalam Listening Part B (Long Conversations) dan Part C (Academic Talks), jawaban dari 3–5 soal muncul SECARA BERURUTAN (in order) dari awal hingga akhir rekaman. Manfaatkan waktu jeda sebelum rekaman diputar untuk memindai pilihan jawaban A–D guna menebak topik kuliahnya.',
-        voiceText:
-          'Pada Listening Part B dan C, jawaban soal selalu muncul secara berurutan dari awal hingga akhir kuliah. Dengarkan baik-baik bagian tengah kuliah untuk menjawab detail mekanisme ilmiahnya.',
-        englishRule:
-          'Jawaban Soal 1 → Awal Rekaman  |  Soal 2 → Tengah Rekaman  |  Soal 3 → Akhir Rekaman',
-        examples: [
-          {
-            en: 'North-south alignment allows broad eastern/western walls to catch morning/afternoon sun while minimizing midday heat.',
-            id: 'Penjajaran utara-selatan menjaga suhu internal sarang tetap stabil di angka 30 derajat Celcius.',
-            highlight: 'Termoregulasi Alami = Topik Utama Kuliah'
-          }
-        ]
-      }
-    ],
-    questions: [
-      {
-        id: 'al1-q1',
-        level: 'Advance',
-        section: 'Listening',
-        skillTag: 'Listening: Academic Talk Detail',
-        type: 'Listening Comprehension',
-        prompt: 'Why do African compass termites align their mounds along a north-south axis?',
-        translationId: 'Mengapa rayap kompas Afrika menyejajarkan gundukan mereka sepanjang poros utara-selatan?',
-        hintId: 'Perhatikan bagian tengah kuliah profesor mengenai penyerapan panas pagi/sore vs tengah hari.',
-        options: [
-          { key: 'A', text: 'To protect the clay structure from strong seasonal winds' },
-          { key: 'B', text: 'To maintain a stable internal temperature throughout the day' },
-          { key: 'C', text: 'To prevent predators from locating the main entrance' },
-          { key: 'D', text: 'To collect rainwater during dry desert months' }
-        ],
-        correctKey: 'B',
-        breakdown: {
-          subject: 'Topik Kuliah: Termoregulasi gundukan rayap kompas',
-          verb: 'regulate internal temperatures / remains remarkably stable',
-          trap: 'Opsi A, C, dan D tidak disebutkan dalam kuliah'
-        },
-        optionAnalysis: {
-          A: 'Salah: Angin musiman tidak dibahas.',
-          B: 'BENAR: Penjajaran utara-selatan menjaga suhu internal tetap stabil di sekitar 30 derajat Celcius.',
-          C: 'Salah: Predator tidak dibahas.',
-          D: 'Salah: Air hujan tidak dibahas.'
-        },
-        formula: 'North-south axis → Serap panas pagi/sore, hindari terik siang → Suhu stabil.',
-        voiceWalkthrough:
-          'Jawabannya B. Penjelasan profesor menunjukkan poros utara-selatan menjaga suhu internal sarang tetap stabil sepanjang hari.'
-      }
-    ]
-  },
+  // ==========================================================================
+  // LEVEL 3: ADVANCE (TARGET 550+ MASTERY)
+  // ==========================================================================
 
+  // --- ADVANCE: STRUCTURE & WRITTEN EXPRESSION ---
   {
     id: 'adv-struct-1',
     level: 'Advance',
@@ -820,24 +1549,46 @@ const CURRICULUM = [
     section: 'Structure',
     code: 'S-3.1',
     moduleRef: 'Structure Skill 13–19',
-    title: 'Structure Advance (550+): Reduced Clauses & Subject-Verb Inversion',
-    shortTitle: 'Reduced Clauses & Inversion',
+    title: 'Reduced Clauses & Subject-Verb Inversion (Negative & Conditional)',
+    shortTitle: 'Reduced Clauses & Inversion (550+)',
     category: 'Structure & Written Expression (550+)',
     paragraphs: [
       {
         id: 'p1',
-        heading: '1. Reduced Clauses (V-ing Aktif vs. V3 Pasif) & Negative/Conditional Inversion',
+        heading: '1. Reduced Adjective & Adverb Clauses (V-ing Aktif vs. V3 Pasif)',
         bodyId:
-          'Klausa sifat dan klausa keterangan dapat diringkas menjadi V-ing (aktif) atau V3 (pasif). Selain itu, ketika kalimat diawali ekspresi negatif (Not only, Rarely, Seldom, Never) atau pengandaian tanpa "If" (Were, Had, Should), posisi Auxiliary dan Subject wajib dibalik (Inversion)!',
+          'Klausa sifat (who/which/that + be) dan klausa keterangan (when/while/after/although + S + be) dapat diringkas dengan membuang connector dan "to be"-nya: sisakan V-ing jika bermakna aktif, atau V3 jika bermakna pasif. Pastikan subjek di luar koma adalah pihak yang tepat melakukan/menerima aksi tersebut!',
         voiceText:
-          'Untuk menembus skor 550+, kuasai dua senjata utama ini: ringkas klausa pasif menjadi V3 seperti "When heated", dan balik susunan subjek-verb saat kalimat diawali kata negatif seperti "Not only".',
+          'Dalam Reduced Clause, hapus connector dan "to be"-nya: sisakan V-ing jika subjek melakukan aksi secara aktif, atau sisakan V3 jika subjek dikenai aksi secara pasif.',
         englishRule:
-          'When + [V3 Pasif] + , + [Subject]  ||  Not only + [do/does/did] + [Subject] + [V1]  ||  Were + S + V3',
+          'When + [V3 Pasif] + , + [Subject]  ||  [V-ing Aktif] + , + [Subject] + [Main Verb]',
+        examples: [
+          {
+            en: 'When heated at high temperatures, carbon atoms rearrange into a diamond structure.',
+            id: 'Ketika dipanaskan pada suhu tinggi, atom karbon menyusun ulang dirinya menjadi struktur berlian. ("carbon atoms" dipanaskan → V3 "heated").',
+            highlight: 'Reduced Passive Adverb Clause: When + heated (V3)'
+          }
+        ]
+      },
+      {
+        id: 'p2',
+        heading: '2. Negative Inversion & Conditional Inversion Tanpa "If"',
+        bodyId:
+          'Senjata pamungkas menuju skor 550+: 1) Jika kalimat diawali ekspresi negatif (Not only, Rarely, Seldom, Never, Hardly, Only after, In no way), susunan wajib dibalik menjadi Auxiliary + Subject + Main Verb. 2) Pada kalimat pengandaian (Conditional), kata "If" dapat dihapus dengan memajukan "Were" (Type 2), "Had" (Type 3), atau "Should" (Type 1) ke depan subjek!',
+        voiceText:
+          'Jika kalimat diawali kata negatif seperti "Not only" atau "Rarely", atau pengandaian tanpa "If" seperti "Had" dan "Were", posisi Auxiliary dan Subject wajib dibalik.',
+        englishRule:
+          'Not only / Rarely + [do/does/did/has/have] + [Subject] + [Verb]  ||  Had + S + V3, S + would have + V3',
         examples: [
           {
             en: 'Not only do black holes trap light waves, but they also warp space-time.',
             id: 'Tidak hanya lubang hitam memerangkap gelombang cahaya, tetapi juga melengkungkan ruang-waktu.',
             highlight: 'Not only + do [Aux] + black holes [Subject] + trap [V1]'
+          },
+          {
+            en: 'Had the pilot noticed the warning light earlier, the delay would have been avoided.',
+            id: 'Seandainya pilot menyadari lampu peringatan lebih awal, keterlambatan itu pasti sudah terhindarkan.',
+            highlight: 'Conditional Inversion Type 3: Had + S + V3'
           }
         ]
       }
@@ -848,7 +1599,6 @@ const CURRICULUM = [
         level: 'Advance',
         section: 'Structure',
         skillTag: 'Negative Inversion',
-        type: 'Structure',
         prompt:
           'Not only _______ light waves, but black holes also warp the surrounding fabric of space-time.',
         translationId:
@@ -880,47 +1630,218 @@ const CURRICULUM = [
         id: 'as1-q2',
         level: 'Advance',
         section: 'Structure',
-        skillTag: 'Reduced Adverb Clause',
-        type: 'Structure',
+        skillTag: 'Conditional Inversion Tanpa "If"',
         prompt:
-          '_______ at high temperatures, carbon atoms rearrange themselves into a crystalline diamond structure.',
+          '_______ more susceptible to bacterial contamination, the blood samples would have been discarded immediately.',
         translationId:
-          'Ketika dipanaskan pada suhu tinggi, atom karbon menyusun ulang dirinya menjadi struktur berlian kristal.',
-        hintId: 'Subjek setelah koma adalah "carbon atoms" yang dikenai perlakuan panas (pasif).',
+          'Seandainya lebih rentan terhadap kontaminasi bakteri, sampel darah tersebut pasti sudah langsung dibuang.',
+        hintId: 'Lihat klausa kedua: "would have been discarded" (Type 3). Gunakan inversi Type 3 tanpa "If"!',
         options: [
-          { key: 'A', text: 'Heating' },
-          { key: 'B', text: 'When heated' },
-          { key: 'C', text: 'It is heated' },
-          { key: 'D', text: 'When heating' }
+          { key: 'A', text: 'Had the laboratory conditions been' },
+          { key: 'B', text: 'The laboratory conditions had been' },
+          { key: 'C', text: 'Were the laboratory conditions' },
+          { key: 'D', text: 'If the laboratory conditions were' }
         ],
-        correctKey: 'B',
+        correctKey: 'A',
         breakdown: {
-          subject: 'carbon atoms (Subjek penerima aksi panas)',
-          verb: 'rearrange (Main Verb)',
-          trap: 'Carbon atoms dipanaskan (Pasif → V3), bukan memanaskan!'
+          subject: 'the laboratory conditions',
+          verb: 'Had ... been (Conditional Inversion Type 3)',
+          trap: 'Klausa hasil memakai "would have V3" (Type 3), sehingga syaratnya wajib "Had + S + V3"'
         },
         optionAnalysis: {
-          A: 'Salah: "Heating" bermakna aktif.',
-          B: 'BENAR: Reduced Adverb Clause pasif ("When they are heated" → "When heated").',
-          C: 'Salah: Dua klausa tanpa connector.',
-          D: 'Salah: "When heating" bermakna aktif.'
+          A: 'BENAR: Conditional Inversion Type 3: "Had + Subject + been".',
+          B: 'Salah: Tanpa "If" dan tidak diinversi.',
+          C: 'Salah: "Were" adalah Type 2 (pasangannya "would V1").',
+          D: 'Salah: Type 2 tidak cocok dengan "would have been discarded".'
         },
-        formula: 'When + [V3 Pasif] + , + [Subject] + [Verb].',
+        formula: 'Had + [Subject] + [V3], + [Subject] + would have + [V3].',
         voiceWalkthrough:
-          'Jawabannya B, "When heated". Subjek "carbon atoms" dikenai perlakuan panas secara pasif sehingga memakai bentuk V3.'
+          'Jawabannya A, "Had the laboratory conditions been". Kita wajib memakai inversi Conditional Type 3 untuk berpasangan dengan "would have been discarded".'
       }
     ]
   },
 
+  {
+    id: 'adv-struct-2',
+    level: 'Advance',
+    levelNum: 3,
+    section: 'Structure',
+    code: 'S-3.2',
+    moduleRef: 'Structure Skill 49–51 & 56–60',
+    title: 'Word Forms (Noun/Adj/Adv), Confusing Verbs (Lie/Lay, Rise/Raise) & Prepositions',
+    shortTitle: 'Word Forms, Lie/Lay & Prepositions',
+    category: 'Structure & Written Expression (550+)',
+    paragraphs: [
+      {
+        id: 'p1',
+        heading: '1. Word Forms (Akhiran Kata Benda, Sifat & Keterangan) + Confusing Verbs',
+        bodyId:
+          'Dalam Written Expression nomor 16–40, banyak soal menguji kesesuaian bentuk kata: 1) Adverb (-ly) menjelaskan Verb, Adjective, atau Adverb lain, BUKAN menjelaskan Noun (Noun wajib dijelaskan oleh Adjective!). 2) Hafalkan pasangan kata kerja mirip yang sering ditukar: "rise / rose / risen" (intransitif — tidak butuh objek, misal: "Prices rise") vs. "raise / raised / raised" (transitif — butuh objek, misal: "The bank raised interest rates"); serta "lie / lay / lain" (berbaring/terletak — tanpa objek) vs. "lay / laid / laid" (meletakkan — butuh objek). 3) Pasangan Preposisi Tetap: capable of, consist of, depend on, responsible for, similar to, different from.',
+        voiceText:
+          'Bedakan kata kerja intransitif "rise" dan "lie" yang tidak membutuhkan objek, dengan kata kerja transitif "raise" dan "lay" yang wajib diikuti objek.',
+        englishRule:
+          'Adjective + Noun (digital signals, BUKAN digitally signals)  ||  rise / lie (tanpa objek) vs. raise / lay (dengan objek)',
+        examples: [
+          {
+            en: 'Modern telecommunications satellites relay digital signals across continents.',
+            id: 'Satelit telekomunikasi modern meneruskan sinyal digital ke seluruh benua. ("digital" = Adjective menjelaskan Noun "signals").',
+            highlight: 'Adjective (digital) + Noun (signals)'
+          },
+          {
+            en: 'The ancient city of Troy lies near the Aegean coast of modern Turkey.',
+            id: 'Kota kuno Troya terletak di dekat pesisir Aegea Turki modern. ("lies" = terletak, tanpa objek).',
+            highlight: 'lies (terletak — tanpa objek) ≠ lays (meletakkan — butuh objek)'
+          }
+        ]
+      }
+    ],
+    questions: [
+      {
+        id: 'as2-q1',
+        level: 'Advance',
+        section: 'Structure',
+        skillTag: 'Word Forms: Adjective vs. Adverb',
+        prompt:
+          'Identify the error: Modern (A) telecommunications satellites relay (B) digitally signals, television broadcasts, and (C) international telephone (D) calls.',
+        translationId:
+          'Identifikasi kesalahan: Satelit telekomunikasi modern meneruskan sinyal digital, siaran televisi, dan panggilan telepon internasional.',
+        hintId: 'Lihat kata "signals" (Noun) pada opsi B: apakah kata benda dijelaskan oleh Adverb "-ly" atau Adjective?',
+        options: [
+          { key: 'A', text: '(A) telecommunications' },
+          { key: 'B', text: '(B) digitally → seharusnya Adjective "digital"' },
+          { key: 'C', text: '(C) international' },
+          { key: 'D', text: '(D) calls' }
+        ],
+        correctKey: 'B',
+        breakdown: {
+          subject: 'Modern telecommunications satellites',
+          verb: 'relay',
+          trap: 'Adverb "digitally" salah dipakai untuk menjelaskan Noun "signals"'
+        },
+        optionAnalysis: {
+          A: 'Benar: Kata benda majemuk sudah tepat.',
+          B: 'SALAH (Kunci Jawaban): Kata benda "signals" wajib dijelaskan oleh Adjective "digital".',
+          C: 'Benar: Adjective "international" menjelaskan "telephone calls".',
+          D: 'Benar: Kata benda jamak.'
+        },
+        formula: 'Adjective (digital) + Noun (signals).',
+        voiceWalkthrough:
+          'Yang salah adalah B, "digitally". Kata benda "signals" harus dijelaskan oleh kata sifat "digital", bukan kata keterangan "digitally".'
+      },
+      {
+        id: 'as2-q2',
+        level: 'Advance',
+        section: 'Structure',
+        skillTag: 'Confusing Verbs: Lie vs. Lay / Rise vs. Raise',
+        prompt:
+          'Identify the error: Because ocean temperatures (A) have raised significantly over the past (B) few decades, coral reefs (C) face severe (D) bleaching.',
+        translationId:
+          'Identifikasi kesalahan: Karena suhu laut telah meningkat secara signifikan selama beberapa dekade terakhir, terumbu karang menghadapi pemutihan parah.',
+        hintId: 'Apakah "ocean temperatures" memiliki objek setelah kata kerja pada opsi A, atau suhu itu naik sendiri (intransitif)?',
+        options: [
+          { key: 'A', text: '(A) have raised → seharusnya intransitif "have risen"' },
+          { key: 'B', text: '(B) few decades' },
+          { key: 'C', text: '(C) face' },
+          { key: 'D', text: '(D) bleaching' }
+        ],
+        correctKey: 'A',
+        breakdown: {
+          subject: 'ocean temperatures',
+          verb: 'have raised → seharusnya "have risen" (intransitif tanpa objek)',
+          trap: '"raise" wajib punya objek (misal: raise money), sedangkan "rise/risen" tidak butuh objek'
+        },
+        optionAnalysis: {
+          A: 'SALAH (Kunci Jawaban): Tidak ada objek setelah kata kerja, sehingga wajib memakai bentuk V3 intransitif "have risen".',
+          B: 'Benar: "few decades" dengan countable noun jamak "decades".',
+          C: 'Benar: Verb jamak untuk "coral reefs".',
+          D: 'Benar: Gerund/noun sebagai objek.'
+        },
+        formula: 'Tanpa Objek: rise → rose → risen  ||  Dengan Objek: raise → raised → raised.',
+        voiceWalkthrough:
+          'Yang salah adalah A, "have raised". Karena suhu laut naik tanpa objek di belakangnya, wajib memakai kata kerja intransitif "have risen".'
+      }
+    ]
+  },
+
+  // --- ADVANCE: LISTENING ---
+  {
+    id: 'adv-listen-1',
+    level: 'Advance',
+    levelNum: 3,
+    section: 'Listening',
+    code: 'L-3.1',
+    moduleRef: 'Listening Skill 18–27',
+    title: 'Listening Advance (550+): Long Conversations & Academic Talks (Part B & C)',
+    shortTitle: 'Part B & C Academic Talks (550+)',
+    category: 'Listening Comprehension (550+)',
+    passage: {
+      title: 'Mini-Lecture Transcript: The Architecture of Termite Mounds (Part C)',
+      text: `(Professor): Today in environmental biology, we are examining how African compass termites regulate internal temperatures without modern air conditioning. These insects construct towering clay mounds—sometimes reaching six meters high—aligned strictly along a north-south axis. Because the broad eastern and western faces absorb solar heat during the cooler morning and late afternoon hours, while only the narrow northern edge faces the intense midday sun, the interior nest remains remarkably stable at around 30 degrees Celsius.`,
+      translationId: `(Profesor): Hari ini dalam biologi lingkungan, kita mengkaji bagaimana rayap kompas Afrika mengatur suhu internal tanpa penyejuk udara modern. Serangga ini membangun gundukan tanah liat menjulang—terkadang mencapai tinggi enam meter—yang disejajarkan secara ketat sepanjang poros utara-selatan. Karena sisi timur dan barat yang lebar menyerap panas matahari selama pagi yang lebih sejuk dan sore hari, sementara hanya tepi utara yang sempit menghadap matahari tengah hari yang terik, sarang bagian dalam tetap sangat stabil pada suhu sekitar 30 derajat Celcius.`
+    },
+    paragraphs: [
+      {
+        id: 'p1',
+        heading: '1. Strategi Antisipasi Pilihan & Urutan Jawaban Part B dan C',
+        bodyId:
+          'Dalam Listening Part B (Long Conversations) dan Part C (Academic Talks), jawaban dari 3–5 soal muncul SECARA BERURUTAN (in order) dari awal hingga akhir rekaman. Manfaatkan jeda sebelum audio diputar untuk memindai pilihan jawaban A–D guna menebak topik kuliah, lalu dengarkan baris pembuka untuk soal pertama (Topik Utama) dan bagian tengah/akhir untuk detail sebab-akibat.',
+        voiceText:
+          'Pada Listening Part B dan C, jawaban soal selalu muncul secara berurutan dari awal hingga akhir kuliah. Dengarkan baik-baik bagian awal untuk topik utama dan bagian tengah untuk mekanisme ilmiahnya.',
+        englishRule:
+          'Jawaban Soal 1 → Awal Rekaman  |  Soal 2 → Tengah Rekaman  |  Soal 3 → Akhir Rekaman',
+        examples: [
+          {
+            en: 'North-south alignment allows broad eastern/western walls to catch morning/afternoon sun while minimizing midday heat.',
+            id: 'Penjajaran utara-selatan menjaga suhu internal sarang tetap stabil di sekitar 30 derajat Celcius.',
+            highlight: 'Termoregulasi Alami = Topik Utama Kuliah'
+          }
+        ]
+      }
+    ],
+    questions: [
+      {
+        id: 'al1-q1',
+        level: 'Advance',
+        section: 'Listening',
+        skillTag: 'Listening: Academic Talk Detail',
+        prompt: 'Why do African compass termites align their mounds along a north-south axis?',
+        translationId: 'Mengapa rayap kompas Afrika menyejajarkan gundukan mereka sepanjang poros utara-selatan?',
+        hintId: 'Perhatikan bagian tengah kuliah profesor mengenai penyerapan panas pagi/sore vs tengah hari.',
+        options: [
+          { key: 'A', text: 'To protect the clay structure from strong seasonal winds' },
+          { key: 'B', text: 'To maintain a stable internal temperature throughout the day' },
+          { key: 'C', text: 'To prevent predators from locating the main entrance' },
+          { key: 'D', text: 'To collect rainwater during dry desert months' }
+        ],
+        correctKey: 'B',
+        breakdown: {
+          subject: 'Topik Kuliah: Termoregulasi gundukan rayap kompas',
+          verb: 'regulate internal temperatures / remains remarkably stable',
+          trap: 'Opsi A, C, dan D tidak disebutkan dalam kuliah'
+        },
+        optionAnalysis: {
+          A: 'Salah: Angin musiman tidak dibahas.',
+          B: 'BENAR: Penjajaran utara-selatan menjaga suhu internal tetap stabil di sekitar 30 derajat Celcius.',
+          C: 'Salah: Predator tidak dibahas.',
+          D: 'Salah: Air hujan tidak dibahas.'
+        },
+        formula: 'North-south axis → Serap panas pagi/sore, hindari terik siang → Suhu stabil.',
+        voiceWalkthrough:
+          'Jawabannya B. Penjelasan profesor menunjukkan poros utara-selatan menjaga suhu internal sarang tetap stabil sepanjang hari.'
+      }
+    ]
+  },
+
+  // --- ADVANCE: READING ---
   {
     id: 'adv-read-1',
     level: 'Advance',
     levelNum: 3,
     section: 'Reading',
     code: 'R-3.1',
-    moduleRef: 'Reading Skill 8–13',
+    moduleRef: 'Reading Skill 6–7 & 12–13',
     title: 'Reading Advance (550+): Implied Details (Inference), Tone & Purpose',
-    shortTitle: 'Inference, Tone & Purpose',
+    shortTitle: 'Inference, Tone & Purpose (550+)',
     category: 'Reading Comprehension (550+)',
     passage: {
       title: 'The Discovery of Cosmic Microwave Background Radiation',
@@ -930,13 +1851,13 @@ const CURRICULUM = [
     paragraphs: [
       {
         id: 'p1',
-        heading: '1. Strategi Deduksi Logis (Implied Details / Inference)',
+        heading: '1. Strategi Deduksi Logis (Inference) & Tone Penulis Akademik',
         bodyId:
-          'Pada soal "What can be inferred / implied...?", jawabannya tidak ditulis kata-per-kata di dalam teks, melainkan kesimpulan logis 1 langkah dari fakta yang tersedia. Perhatikan kata kunci kausalitas, kronologi waktu, dan kata sifat bernuansa seperti "serendipitous" (kebetulan yang menguntungkan).',
+          'Pada soal "What can be inferred / implied...?", jawabannya tidak ditulis kata-per-kata di teks, melainkan kesimpulan logis 1 langkah dari fakta yang tersedia (misalnya: tujuan awal komunikasi satelit + kata "serendipitous" → penemuan terjadi secara tidak sengaja). Untuk soal Tone ("What is the author’s tone?"), bacaan akademik TOEFL hampir selalu bernada objektif, informatif, atau analitis—tolak opsi emosional seperti "angry", "sarcastic", atau "humorous".',
         voiceText:
           'Pada soal Inference tingkat lanjut, tarik kesimpulan logis satu langkah dari fakta bacaan. Kata "serendipitous" dan tujuan awal komunikasi satelit membuktikan penemuan itu terjadi secara tidak sengaja.',
         englishRule:
-          'Tujuan Awal = Satelit + Kata Kunci = "serendipitous" → Kesimpulan: Unintentional Discovery',
+          'Tujuan Awal = Satelit + "serendipitous" → Unintentional Discovery  ||  Tone Akademik = Objective / Informative / Analytical',
         examples: [
           {
             en: 'Before 1964, CMB radiation had only been predicted theoretically (1940s) → Empirical proof did not exist prior to 1964.',
@@ -952,7 +1873,6 @@ const CURRICULUM = [
         level: 'Advance',
         section: 'Reading',
         skillTag: 'Reading: Implied Detail (Inference)',
-        type: 'Reading Comprehension',
         prompt:
           'What can be inferred about Penzias and Wilson’s discovery of the Cosmic Microwave Background?',
         translationId:
@@ -998,370 +1918,7 @@ const CURRICULUM = [
 ];
 
 // ============================================================================
-// 3. LONGMAN-STYLE QUESTION BANK (CATEGORIZED BY LEVEL FOR RANDOM PRACTICE)
-// ============================================================================
-const LONGMAN_QUESTION_BANK = [
-  // --- BASIC LEVEL BANK ---
-  {
-    id: 'lqb-b1',
-    level: 'Basic',
-    section: 'Structure',
-    skillTag: 'Structure Skill 1–2: S-V & Prepositions',
-    prompt: 'The north Platte River _______ from Wyoming into Nebraska.',
-    translationId: 'Sungai North Platte _______ dari Wyoming ke Nebraska.',
-    hintId: 'Subjeknya adalah "The north Platte River" (tunggal) dan kalimat ini belum memiliki kata kerja utama!',
-    options: [
-      { key: 'A', text: 'it flowed' },
-      { key: 'B', text: 'flows' },
-      { key: 'C', text: 'flowing' },
-      { key: 'D', text: 'with flowing water' }
-    ],
-    correctKey: 'B',
-    breakdown: {
-      subject: 'The north Platte River (Singular)',
-      verb: 'flows (Main Verb Singular)',
-      trap: 'Opsi A double subject ("it"), C participle tanpa to be, D prepositional phrase'
-    },
-    optionAnalysis: {
-      A: 'Salah: Mengulang subjek dengan kata ganti "it".',
-      B: 'BENAR: "flows" adalah kata kerja tunggal (Present Simple untuk fakta geografis) yang tepat.',
-      C: 'Salah: "flowing" (V-ing tanpa to be) bukan main verb.',
-      D: 'Salah: Tidak mengandung kata kerja.'
-    },
-    formula: '[Singular Subject] + [Singular Main Verb (flows)].',
-    voiceWalkthrough: 'Jawabannya B, "flows". Kalimat ini memiliki satu subjek tunggal dan membutuhkan satu kata kerja utama.'
-  },
-  {
-    id: 'lqb-b2',
-    level: 'Basic',
-    section: 'Structure',
-    skillTag: 'Structure Skill 3: Appositives',
-    prompt: '_______, George, is attending the lecture.',
-    translationId: '_______, George, sedang menghadiri kuliah tersebut.',
-    hintId: 'Kata ", George," yang diapit dua koma adalah Appositive. Kalimat ini masih membutuhkan Subject di awal!',
-    options: [
-      { key: 'A', text: 'Right now' },
-      { key: 'B', text: 'Happily' },
-      { key: 'C', text: 'Because of the time' },
-      { key: 'D', text: 'My friend' }
-    ],
-    correctKey: 'D',
-    breakdown: {
-      subject: 'My friend (Subject utama sebelum appositive ", George,")',
-      verb: 'is attending',
-      trap: 'Jangan tertipu mengira "George" adalah subjek utama karena ia diapit koma!'
-    },
-    optionAnalysis: {
-      A: 'Salah: Keterangan waktu, bukan subjek.',
-      B: 'Salah: Adverb, bukan subjek.',
-      C: 'Salah: Frasa preposisi, bukan subjek.',
-      D: 'BENAR: "My friend" menjadi Subject kalimat yang dijelaskan oleh appositive ", George,".'
-    },
-    formula: '[SUBJECT (My friend)] + , [Appositive (George)] , + [Verb (is attending)].',
-    voiceWalkthrough: 'Jawabannya D, "My friend". Karena George diapit dua koma, George adalah appositive dan kalimat membutuhkan subjek di depannya.'
-  },
-  {
-    id: 'lqb-b3',
-    level: 'Basic',
-    section: 'Structure',
-    skillTag: 'Structure Skill 4–5: Present & Past Participles',
-    prompt: 'The packages _______ mailed at the post office will arrive Monday.',
-    translationId: 'Paket-paket yang dikirimkan di kantor pos akan tiba hari Senin.',
-    hintId: 'Main verb kalimat adalah "will arrive". Kata "mailed" adalah Past Participle (V3) bermakna pasif!',
-    options: [
-      { key: 'A', text: 'have' },
-      { key: 'B', text: 'were' },
-      { key: 'C', text: 'them' },
-      { key: 'D', text: 'just' }
-    ],
-    correctKey: 'D',
-    breakdown: {
-      subject: 'The packages',
-      verb: 'will arrive (Main Verb sudah ada di belakang)',
-      trap: 'Jika memilih A ("have") atau B ("were"), kalimat akan punya 2 verb tanpa connector!'
-    },
-    optionAnalysis: {
-      A: 'Salah: Akan membentuk dua kata kerja utama ("have mailed" dan "will arrive").',
-      B: 'Salah: Akan membentuk dua kata kerja utama ("were mailed" dan "will arrive").',
-      C: 'Salah: Kata ganti objek tidak tepat di posisi ini.',
-      D: 'BENAR: Adverb "just" menyisip sebelum participle pasif "mailed" tanpa menambah verb baru.'
-    },
-    formula: '[Subject] + (just) [Past Participle V3] + [Main Verb (will arrive)].',
-    voiceWalkthrough: 'Jawabannya D, "just". Kata "mailed" di sini berfungsi sebagai kata sifat pasif, sehingga kita tidak boleh menambahkan kata kerja bantu "have" atau "were".'
-  },
-  {
-    id: 'lqb-b4',
-    level: 'Basic',
-    section: 'Listening',
-    skillTag: 'Listening Skill 1–2: Last Line & Synonyms',
-    prompt:
-      'Audio Dialogue — Man: "Why is Barbara feeling so happy?" | Woman: "She just started working in a real estate agency." | Question: What does the woman say about Barbara?',
-    translationId:
-      'Dialog Audio — Pria: "Mengapa Barbara merasa sangat senang?" | Wanita: "Dia baru saja mulai bekerja di agen properti." | Pertanyaan: Apa yang dikatakan wanita tentang Barbara?',
-    hintId: 'Cari sinonim dari "started" dan "working" pada baris pembicara kedua!',
-    options: [
-      { key: 'A', text: 'She always liked her work in real estate.' },
-      { key: 'B', text: 'She began a new job.' },
-      { key: 'C', text: 'She just bought some real estate.' },
-      { key: 'D', text: 'She bought a real estate agency.' }
-    ],
-    correctKey: 'B',
-    breakdown: {
-      subject: 'Key Words: "started working"',
-      verb: 'Synonyms: "began a new job"',
-      trap: 'Hindari opsi yang mengulang kata "real estate" dengan makna salah'
-    },
-    optionAnalysis: {
-      A: 'Salah: Tidak disebutkan dia selalu menyukainya.',
-      B: 'BENAR: "started working" bersinonim dengan "began a new job".',
-      C: 'Salah: Dia bekerja di sana, bukan membeli properti.',
-      D: 'Salah: Dia tidak membeli agensi tersebut.'
-    },
-    formula: 'started working = began a new job.',
-    voiceWalkthrough: 'Jawabannya B, "She began a new job", yang merupakan sinonim dari "started working".'
-  },
-
-  // --- INTERMEDIATE LEVEL BANK ---
-  {
-    id: 'lqb-i1',
-    level: 'Intermediate',
-    section: 'Structure',
-    skillTag: 'Structure Skill 6–8: Coordinate & Adverb Connectors',
-    prompt: 'A power failure occurred, _______ the lamps went out.',
-    translationId: 'Pemadaman listrik terjadi, _______ lampu-lampu pun padam.',
-    hintId: 'Ada 2 klausa lengkap ("A power failure occurred" dan "the lamps went out") yang dipisahkan tanda koma.',
-    options: [
-      { key: 'A', text: 'then' },
-      { key: 'B', text: 'so' },
-      { key: 'C', text: 'later' },
-      { key: 'D', text: 'next' }
-    ],
-    correctKey: 'B',
-    breakdown: {
-      subject: 'S1: A power failure | S2: the lamps',
-      verb: 'V1: occurred | V2: went out',
-      trap: 'Kata "then", "later", "next" adalah adverb, BUKAN coordinate connector (FANBOYS)!'
-    },
-    optionAnalysis: {
-      A: 'Salah: "then" bukan bagian dari FANBOYS sehingga menyebabkan comma splice.',
-      B: 'BENAR: "so" adalah coordinate connector (FANBOYS) yang sah setelah koma untuk menghubungkan dua klausa.',
-      C: 'Salah: "later" adalah keterangan waktu.',
-      D: 'Salah: "next" bukan connector.'
-    },
-    formula: '[S1 + V1] + , + [FANBOYS: for/and/nor/but/or/yet/so] + [S2 + V2].',
-    voiceWalkthrough: 'Jawabannya B, "so". Dua klausa yang dipisahkan koma wajib dihubungkan oleh salah satu dari FANBOYS.'
-  },
-  {
-    id: 'lqb-i2',
-    level: 'Intermediate',
-    section: 'Structure',
-    skillTag: 'Structure Skill 9–10: Noun Clauses',
-    prompt: '_______ was on television made me angry.',
-    translationId: '_______ ada di televisi membuatku marah.',
-    hintId: 'Main verb kalimat adalah "made". Kita butuh Noun Clause connector yang sekaligus merangkap subjek bagi "was"!',
-    options: [
-      { key: 'A', text: 'It' },
-      { key: 'B', text: 'The story' },
-      { key: 'C', text: 'What' },
-      { key: 'D', text: 'When' }
-    ],
-    correctKey: 'C',
-    breakdown: {
-      subject: 'What was on television (Noun Clause sebagai Subject)',
-      verb: 'was (Verb anak kalimat) | made (Main Verb)',
-      trap: 'Jika memilih A atau B, akan ada 2 verb ("was" dan "made") tanpa connector!'
-    },
-    optionAnalysis: {
-      A: 'Salah: Tidak ada connector untuk dua verb.',
-      B: 'Salah: Tidak ada connector untuk dua verb.',
-      C: 'BENAR: "What" berfungsi ganda sebagai connector dan subjek bagi "was".',
-      D: 'Salah: "When" tidak bisa menjadi subjek bagi "was".'
-    },
-    formula: 'WHAT + [Verb 1] + ... + [Main Verb].',
-    voiceWalkthrough: 'Jawabannya C, "What". Kata "What" berfungsi sekaligus sebagai penghubung dan subjek dari kata kerja "was".'
-  },
-  {
-    id: 'lqb-i3',
-    level: 'Intermediate',
-    section: 'Structure',
-    skillTag: 'Structure Skill 11–12: Adjective Clauses',
-    prompt: 'The gift _______ selected for the bride was rather expensive.',
-    translationId: 'Hadiah _______ dipilih untuk pengantin wanita itu agak mahal.',
-    hintId: 'Perhatikan pilihan jawabannya: klausa sifat ini membutuhkan connector dan subjek!',
-    options: [
-      { key: 'A', text: 'because' },
-      { key: 'B', text: 'was' },
-      { key: 'C', text: 'since' },
-      { key: 'D', text: 'which we' }
-    ],
-    correctKey: 'D',
-    breakdown: {
-      subject: 'Main: The gift | Adj Clause: we',
-      verb: 'Main: was | Adj Clause: selected',
-      trap: 'Tanpa connector + subjek ("which we"), kalimat tidak punya subjek untuk "selected"'
-    },
-    optionAnalysis: {
-      A: 'Salah: "because" tidak bisa menjelaskan kata benda "The gift".',
-      B: 'Salah: Akan menimbulkan dua verb tanpa connector.',
-      C: 'Salah: "since" adalah adverb connector.',
-      D: 'BENAR: "which" (connector objek) + "we" (subject) + "selected" (verb).'
-    },
-    formula: '[Noun] + [which/that + Subject + Verb] + [Main Verb].',
-    voiceWalkthrough: 'Jawabannya D, "which we". Klausa sifat ini membutuhkan relative pronoun "which" beserta subjek "we".'
-  },
-  {
-    id: 'lqb-i4',
-    level: 'Intermediate',
-    section: 'Listening',
-    skillTag: 'Listening Skill 5: Passive Restatements',
-    prompt:
-      'Audio Dialogue — Man: "Did Sally go to the bank this morning?" | Woman: "Yes, she did. She got a new checking account." | Question: What does the woman imply?',
-    translationId:
-      'Dialog Audio — Pria: "Apakah Sally pergi ke bank pagi ini?" | Wanita: "Ya. Dia membuka rekening giro baru." | Pertanyaan: Apa yang disiratkan wanita itu?',
-    hintId: 'Kalimat aktif di dialog ("She got a new checking account") sering diubah menjadi pasif di pilihan jawaban!',
-    options: [
-      { key: 'A', text: 'Sally wrote several checks.' },
-      { key: 'B', text: 'Sally wanted to check up on the bank.' },
-      { key: 'C', text: 'A new checking account was opened.' },
-      { key: 'D', text: 'Sally checked on the balance in her account.' }
-    ],
-    correctKey: 'C',
-    breakdown: {
-      subject: 'Active: She got a new checking account',
-      verb: 'Passive Restatement: A new checking account was opened',
-      trap: 'Opsi A, B, D adalah jebakan bunyi mirip kata "check"'
-    },
-    optionAnalysis: {
-      A: 'Salah: Jebakan kata "checks".',
-      B: 'Salah: Jebakan frasa "check up".',
-      C: 'BENAR: Parafrase pasif yang akurat dari kalimat aktif pembicara kedua.',
-      D: 'Salah: Tidak disebutkan pemeriksaan saldo.'
-    },
-    formula: 'Active (S + got + Object) → Passive (Object + was opened).',
-    voiceWalkthrough: 'Jawabannya C, "A new checking account was opened", yang merupakan bentuk pasif dari pernyataan pembicara kedua.'
-  },
-
-  // --- ADVANCE LEVEL BANK (550+) ---
-  {
-    id: 'lqb-a1',
-    level: 'Advance',
-    section: 'Structure',
-    skillTag: 'Structure Skill 13–14: Reduced Clauses',
-    prompt: '_______ on several different television programs, the witness gave conflicting accounts of what had happened.',
-    translationId: '_______ di beberapa program televisi yang berbeda, saksi tersebut memberikan keterangan yang bertentangan tentang apa yang telah terjadi.',
-    hintId: 'Subjek setelah koma adalah "the witness" yang tampil (aktif) di acara televisi!',
-    options: [
-      { key: 'A', text: 'He appeared' },
-      { key: 'B', text: 'Who appeared' },
-      { key: 'C', text: 'Appearing' },
-      { key: 'D', text: 'Appears' }
-    ],
-    correctKey: 'C',
-    breakdown: {
-      subject: 'the witness (Pelaku aksi "appear" → Aktif)',
-      verb: 'gave (Main Verb)',
-      trap: 'Karena makna aktif ("After he appeared..."), reduksinya menggunakan V-ing ("Appearing")'
-    },
-    optionAnalysis: {
-      A: 'Salah: Dua klausa tanpa connector.',
-      B: 'Salah: Relative pronoun "Who" tidak bisa ditaruh di awal kalimat sebelum subjek utama.',
-      C: 'BENAR: Reduced Adverb Clause aktif ("Appearing" = After he appeared).',
-      D: 'Salah: Kata kerja finite tanpa penghubung.'
-    },
-    formula: '[V-ing (Reduced Active Clause)] + , + [Subject] + [Main Verb].',
-    voiceWalkthrough: 'Jawabannya C, "Appearing". Subjek "the witness" melakukan aksi tampil secara aktif sehingga klausa keterangan diringkas menjadi V-ing.'
-  },
-  {
-    id: 'lqb-a2',
-    level: 'Advance',
-    section: 'Structure',
-    skillTag: 'Structure Skill 15–19: Inverted Subjects & Verbs',
-    prompt: 'Rarely _______ located near city lights or at lower elevations.',
-    translationId: 'Jarang sekali _______ berlokasi di dekat lampu kota atau di dataran rendah.',
-    hintId: 'Kata negatif "Rarely" berada di awal kalimat! Wajib inversi: Auxiliary + Subject.',
-    options: [
-      { key: 'A', text: 'observatories are' },
-      { key: 'B', text: 'are' },
-      { key: 'C', text: 'in the observatories' },
-      { key: 'D', text: 'are observatories' }
-    ],
-    correctKey: 'D',
-    breakdown: {
-      subject: 'observatories (Plural)',
-      verb: 'are ... located (Inverted Passive Verb)',
-      trap: 'Negative expression "Rarely" di awal kalimat mewajibkan posisi "are" sebelum "observatories"'
-    },
-    optionAnalysis: {
-      A: 'Salah: Susunan normal tanpa inversi.',
-      B: 'Salah: Kehilangan subjek.',
-      C: 'Salah: Berupa frasa preposisi.',
-      D: 'BENAR: Inversi sempurna: "Rarely + are + observatories + located".'
-    },
-    formula: 'Rarely + [are/do/does/did] + [Subject] + [Verb].',
-    voiceWalkthrough: 'Jawabannya D, "are observatories". Kata negatif "Rarely" di awal kalimat memicu inversi antara auxiliary "are" dan subjek "observatories".'
-  },
-  {
-    id: 'lqb-a3',
-    level: 'Advance',
-    section: 'Structure',
-    skillTag: 'Structure Skill 18: Conditional Inversion',
-    prompt: '_______ more susceptible to bacterial contamination, the blood samples would have been discarded immediately.',
-    translationId: 'Seandainya lebih rentan terhadap kontaminasi bakteri, sampel darah tersebut pasti sudah langsung dibuang.',
-    hintId: 'Lihat klausa kedua: "would have been discarded" (Conditional Type 3). Gunakan inversi Type 3 tanpa "If"!',
-    options: [
-      { key: 'A', text: 'Had the laboratory conditions been' },
-      { key: 'B', text: 'The laboratory conditions had been' },
-      { key: 'C', text: 'Were the laboratory conditions' },
-      { key: 'D', text: 'If the laboratory conditions were' }
-    ],
-    correctKey: 'A',
-    breakdown: {
-      subject: 'the laboratory conditions',
-      verb: 'Had ... been (Conditional Inversion Type 3)',
-      trap: 'Klausa hasil memakai "would have V3" (Type 3), sehingga syaratnya wajib "Had + S + V3"'
-    },
-    optionAnalysis: {
-      A: 'BENAR: Conditional Inversion Type 3: "Had + Subject + been".',
-      B: 'Salah: Tanpa "If" dan tidak diinversi.',
-      C: 'Salah: "Were" adalah Type 2 (pasangannya "would V1", bukan "would have V3").',
-      D: 'Salah: Type 2 tidak cocok dengan "would have been discarded".'
-    },
-    formula: 'Had + [Subject] + [V3], + [Subject] + would have + [V3].',
-    voiceWalkthrough: 'Jawabannya A, "Had the laboratory conditions been". Karena klausa kedua memakai "would have been discarded", kita wajib memakai inversi Conditional Type 3.'
-  },
-  {
-    id: 'lqb-a4',
-    level: 'Advance',
-    section: 'Written Expression',
-    skillTag: 'Written Expression: Parallel & Time Markers',
-    prompt: 'Identify the error: The (A) discovery of gold in California (B) in 1848 (C) has brought more than 40,000 prospectors to the region (D) within two years.',
-    translationId: 'Identifikasi kesalahan: Penemuan emas di California pada tahun 1848 telah membawa lebih dari 40.000 pencari emas ke wilayah tersebut dalam waktu dua tahun.',
-    hintId: 'Perhatikan penanda waktu lampau spesifik "in 1848"!',
-    options: [
-      { key: 'A', text: '(A) discovery' },
-      { key: 'B', text: '(B) in 1848' },
-      { key: 'C', text: '(C) has brought → seharusnya Simple Past "brought"' },
-      { key: 'D', text: '(D) within two years' }
-    ],
-    correctKey: 'C',
-    breakdown: {
-      subject: 'The discovery of gold',
-      verb: 'has brought → Seharusnya Simple Past "brought"',
-      trap: 'Penanda waktu lampau spesifik "in 1848" melarang penggunaan Present Perfect (has + V3)'
-    },
-    optionAnalysis: {
-      A: 'Benar: Kata benda "discovery" sudah tepat.',
-      B: 'Benar: Keterangan tahun lampau.',
-      C: 'SALAH (Harus diubah): Karena ada waktu spesifik "in 1848", wajib memakai Simple Past "brought".',
-      D: 'Benar: Keterangan durasi lampau sudah tepat.'
-    },
-    formula: 'Specific Past Time (in 1848) → Simple Past (V2), BUKAN has + V3.',
-    voiceWalkthrough: 'Yang salah adalah C, "has brought". Karena kejadiannya terjadi pada tahun spesifik di masa lampau yaitu "in 1848", wajib memakai bentuk Simple Past "brought".'
-  }
-];
-
-// ============================================================================
-// 4. DATA FOR MINI-GAMES, TIMED SIMULATION, LISTENING LAB & FLASHCARDS
+// 3. DATA FOR MINI-GAMES, TIMED SIMULATION, LISTENING LAB & FLASHCARDS
 // ============================================================================
 const SPEED_TRAP_CHALLENGES = [
   {
@@ -1382,27 +1939,27 @@ const SPEED_TRAP_CHALLENGES = [
   },
   {
     id: 'st-3',
-    sentence: 'The paintings exhibited at the Louvre attract millions of visitors.',
-    question: 'Apa fungsi kata "exhibited" pada kalimat di atas?',
-    choices: ['Reduced Adjective Clause (Pasif)', 'Main Verb Kalimat', 'Appositive'],
-    correct: 'Reduced Adjective Clause (Pasif)',
-    rule: 'Reduced Clause: "which are exhibited" diringkas menjadi V3 "exhibited"; Main Verb-nya adalah "attract".'
+    sentence: 'Several bacteria isolated from deep-sea vents survive extreme heat.',
+    question: 'Mengapa memakai kata "bacteria" dan verb tanpa "-s" (survive)?',
+    choices: ['Irregular Plural ("bacteria" jamak)', 'Uncountable Noun', 'Passive Voice'],
+    correct: 'Irregular Plural ("bacteria" jamak)',
+    rule: 'Irregular Plural: Bentuk tunggal = bacterium, bentuk jamak = bacteria (+ Plural Verb).'
   },
   {
     id: 'st-4',
-    sentence: 'Each of the newly hired engineers receives a safety manual.',
-    question: 'Mengapa verb-nya memakai "-s" (receives)?',
-    choices: ['Subjek aslinya "Each" (Tunggal)', 'Karena "engineers" jamak', 'Karena kalimat pasif'],
-    correct: 'Subjek aslinya "Each" (Tunggal)',
-    rule: 'Indefinite Pronoun: "Each" selalu dihitung tunggal meskipun diikuti "of + plural noun".'
+    sentence: 'Researchers look forward to publishing the clinical trial results.',
+    question: 'Mengapa memakai "publishing" (V-ing) setelah "look forward to"?',
+    choices: ['"to" adalah Preposisi (+ Gerund V-ing)', 'Present Continuous Tense', 'Passive Voice'],
+    correct: '"to" adalah Preposisi (+ Gerund V-ing)',
+    rule: 'Aturan Gerund: "look forward to / be used to / contribute to" wajib diikuti V-ing!'
   },
   {
     id: 'st-5',
-    sentence: 'Sacramento, the capital of California, lies in the Central Valley.',
-    question: 'Apa peran frasa ", the capital of California,"?',
-    choices: ['Appositive (Penjelas Subjek)', 'Main Verb', 'Object of Preposition'],
-    correct: 'Appositive (Penjelas Subjek)',
-    rule: 'Aturan Appositive: Frasa kata benda yang diapit dua koma adalah Appositive.'
+    sentence: 'The telegraph message was transmitted across the Atlantic in 1858.',
+    question: 'Mengapa memakai "was transmitted" dan bukan "has transmitted"?',
+    choices: ['Passive Voice + Tahun Lampau Spesifik (1858)', 'Present Perfect Aktif', 'Double Comparative'],
+    correct: 'Passive Voice + Tahun Lampau Spesifik (1858)',
+    rule: 'Benda mati menerima aksi (Passive: was + V3) & tahun lampau spesifik melarang "has".'
   },
   {
     id: 'st-6',
@@ -1465,42 +2022,42 @@ const MINI_TEST_QUESTIONS = [
   },
   {
     id: 'mt-2',
-    skill: 'Multiple Clauses & Connectors',
-    prompt: '_______ most spiders are harmless to humans, a few species possess venom potent enough to cause serious injury.',
+    skill: 'Gerund & Prepositions',
+    prompt: 'Wetlands play a vital role in _______ floodwaters and filtering agricultural runoff.',
     options: [
-      { key: 'A', text: 'Despite' },
-      { key: 'B', text: 'Although' },
-      { key: 'C', text: 'Because of' },
-      { key: 'D', text: 'In spite of' }
+      { key: 'A', text: 'absorb' },
+      { key: 'B', text: 'absorbing' },
+      { key: 'C', text: 'to absorb' },
+      { key: 'D', text: 'absorbed' }
     ],
     correctKey: 'B',
-    explanation: 'Diikuti oleh klausa lengkap (S + V) dan bermakna pertentangan, maka wajib memakai connector "Although".'
+    explanation: 'Setelah preposisi "in" dan sejajar dengan "filtering", wajib memakai Gerund V-ing: "absorbing".'
   },
   {
     id: 'mt-3',
-    skill: 'Adjective Clauses',
-    prompt: 'The Mariana Trench, _______ reaches a depth of nearly 11,000 meters, is the deepest oceanic trench on Earth.',
+    skill: 'Passive Voice',
+    prompt: 'The Rosetta Stone _______ in 1799 by French soldiers stationed near the Nile Delta.',
     options: [
-      { key: 'A', text: 'that' },
-      { key: 'B', text: 'which' },
-      { key: 'C', text: 'where' },
-      { key: 'D', text: 'what' }
+      { key: 'A', text: 'discovered' },
+      { key: 'B', text: 'was discovered' },
+      { key: 'C', text: 'has discovered' },
+      { key: 'D', text: 'discovering' }
     ],
     correctKey: 'B',
-    explanation: 'Setelah tanda koma untuk benda, dilarang memakai "that"—wajib menggunakan "which".'
+    explanation: 'Subjek benda ("The Rosetta Stone") ditemukan oleh pelaku ("by French soldiers") pada tahun lampau 1799 → Simple Past Passive "was discovered".'
   },
   {
     id: 'mt-4',
-    skill: 'Reduced Clauses',
-    prompt: '_______ in 1928 by Alexander Fleming, penicillin revolutionized the treatment of bacterial infections.',
+    skill: 'Uncountable Nouns',
+    prompt: 'Identify the error: Before (A) departing for the expedition, the crew packed (B) many heavy (C) equipments and emergency (D) rations.',
     options: [
-      { key: 'A', text: 'Discovering' },
-      { key: 'B', text: 'Discovered' },
-      { key: 'C', text: 'It was discovered' },
-      { key: 'D', text: 'When discovering' }
+      { key: 'A', text: '(A) departing' },
+      { key: 'B', text: '(B) many → seharusnya "much"' },
+      { key: 'C', text: '(C) equipments → salah, harusnya uncountable "equipment"' },
+      { key: 'D', text: '(D) rations' }
     ],
-    correctKey: 'B',
-    explanation: 'Reduced Clause pasif di awal kalimat: "Discovered" (V3) menerangkan subjek "penicillin" yang ditemukan.'
+    correctKey: 'C',
+    explanation: '"equipment" adalah Uncountable Noun sehingga tidak pernah boleh ditambah akhiran "-s".'
   },
   {
     id: 'mt-5',
@@ -1517,16 +2074,16 @@ const MINI_TEST_QUESTIONS = [
   },
   {
     id: 'mt-6',
-    skill: 'Time Markers & Tenses',
-    prompt: 'Identify the error: Neil Armstrong (A) has walked (B) on the lunar surface (C) in July 1969 (D).',
+    skill: 'Articles (A vs. An)',
+    prompt: 'Identify the error: It takes nearly (A) a hour for (B) a commercial aircraft to reach (C) an altitude of (D) 35,000 feet.',
     options: [
-      { key: 'A', text: '(A) Neil Armstrong' },
-      { key: 'B', text: '(B) has walked → seharusnya "walked"' },
-      { key: 'C', text: '(C) on the lunar surface' },
-      { key: 'D', text: '(D) in July 1969' }
+      { key: 'A', text: '(A) a hour → seharusnya "an hour"' },
+      { key: 'B', text: '(B) a commercial' },
+      { key: 'C', text: '(C) an altitude' },
+      { key: 'D', text: '(D) 35,000 feet' }
     ],
-    correctKey: 'B',
-    explanation: 'Penanda waktu lampau spesifik "in July 1969" wajib memakai Simple Past "walked" tanpa "has".'
+    correctKey: 'A',
+    explanation: 'Huruf "h" pada "hour" tidak dibaca sehingga diawali bunyi vokal dan wajib memakai "an hour".'
   },
   {
     id: 'mt-7',
@@ -1587,7 +2144,7 @@ const LISTENING_LAB_ITEMS = [
     ],
     correctKey: 'C',
     explanation:
-      'Kalimat aktif di dialog ("She got a new checking account") sering diparafrase menjadi kalimat pasif di pilihan jawaban ("A new checking account was opened").'
+      'Kalimat aktif di dialog ("She got a new checking account") diparafrase menjadi kalimat pasif di pilihan jawaban ("A new checking account was opened").'
   },
   {
     id: 'ls-3',
@@ -1626,54 +2183,60 @@ const LISTENING_LAB_ITEMS = [
 const GRAMMAR_FLASHCARDS = [
   {
     id: 'fc-1',
-    category: 'Irregular Plurals (Kata Benda Jamak)',
-    front: 'Phenomenon  |  Criterion  |  Datum  |  Bacterium',
-    back: 'JAMAK: Phenomena  |  Criteria  |  Data  |  Bacteria\n(Wajib pakai Plural Verb: are / were / have!)'
+    category: 'Irregular Plurals (Singular → Plural)',
+    front: 'Phenomenon  |  Criterion  |  Datum  |  Bacterium  |  Analysis',
+    back: 'JAMAK: Phenomena  |  Criteria  |  Data  |  Bacteria  |  Analyses\n(Wajib pakai Plural Verb: are / were / have!)'
   },
   {
     id: 'fc-2',
-    category: 'Paired Conjunctions (Konjungsi Berpasangan)',
-    front: 'Pasangan Tetap: Both / Either / Neither / Not Only',
-    back: '• both ... AND ...\n• either ... OR ...\n• neither ... NOR ...\n• not only ... BUT ALSO ...'
+    category: 'Uncountable Nouns (JANGAN Pakai "-s" & "many")',
+    front: 'Information  |  Equipment  |  Advice  |  Luggage  |  Evidence',
+    back: 'SELALU TUNGGAL & TANPA "-s"!\nGunakan: much / little / less / amount of + Singular Verb (is / has).'
   },
   {
     id: 'fc-3',
-    category: 'Preposition Combinations (Pasangan Preposisi)',
-    front: 'Capable ___  |  Depend ___  |  Consist ___  |  Responsible ___',
-    back: '• capable OF + V-ing\n• depend ON\n• consist OF\n• responsible FOR'
+    category: 'Gerund (V-ing) Triggers',
+    front: 'look forward to / be used to / contribute to / enjoy / avoid / recommend',
+    back: 'WAJIB DIIKUTI GERUND (V-ing)!\nContoh: look forward to publishing, avoid pointing, recommend installing.'
   },
   {
     id: 'fc-4',
-    category: 'Negative Inversion Triggers (Pemicu Inversi)',
-    front: 'Never / Rarely / Seldom / Hardly / Not Only / Only After',
-    back: 'Jika berada di AWAL kalimat, susunan wajib dibalik:\n[Negative Word] + [Auxiliary (do/does/did/has/was)] + [Subject] + [Verb]'
+    category: 'Articles A vs. An (Aturan Bunyi)',
+    front: '___ university / ___ European   vs.   ___ hour / ___ honest man',
+    back: '• A university / A European (diawali bunyi konsonan /ju:/)\n• AN hour / AN honest man (huruf "h" tidak dibaca → bunyi vokal)'
   },
   {
     id: 'fc-5',
-    category: 'Time Markers (Penanda Waktu)',
-    front: 'Since 2010 / For 5 years   vs.   In 2010 / 5 years ago',
-    back: '• Since / For → Present Perfect (have/has + V3)\n• In 2010 / ago → Simple Past (V2 murni tanpa have/has)'
+    category: 'Negative & Conditional Inversion (550+)',
+    front: 'Not only / Rarely / Seldom / Never   ||   Had / Were / Should (Tanpa "If")',
+    back: '• Rarely + do/does/did/has + Subject + Verb\n• Had + Subject + V3, Subject + would have + V3'
   }
 ];
 
 // ============================================================================
-// 5. SMART OFFLINE + GEMINI AI LECTURER Q&A ENGINE
+// 4. SMART OFFLINE + GEMINI AI LECTURER Q&A ENGINE
 // ============================================================================
 function generateSmartFallbackReply(userQuestion, currentTopic) {
   const q = String(userQuestion || '').toLowerCase();
   const topicTitle = currentTopic?.title || 'TOEFL Structure & Reading';
 
-  if (q.includes('kenapa bukan') || q.includes('mengapa bukan') || q.includes('opsi')) {
-    return `Bedah Jebakan Opsi! Dalam ujian TOEFL ITP, pembuat soal merancang 3 pengecoh (distractors) dengan pola tetap: menarik perhatian mata pada kata benda jamak di dalam Prepositional Phrase, menghilangkan Main Verb atau memunculkan Double Verb tanpa connector, atau menyalahi aturan inversi dan paralelisme. Cek kotak Analisis Opsi Jawaban di bawah soal untuk melihat alasan spesifik mengapa opsi tersebut gugur!`;
+  if (q.includes('gerund') || q.includes('ing') || q.includes('infinitive')) {
+    return `Aturan emas Gerund vs. Infinitive di TOEFL: Setiap kata kerja setelah preposisi wajib berbentuk V-ing (Gerund), termasuk frasa yang memakai "to" sebagai preposisi seperti "look forward to", "be accustomed to", dan "contribute to". Selain itu, kata kerja seperti enjoy, avoid, consider, recommend, dan suggest juga wajib diikuti V-ing!`;
   }
-  if (q.includes('preposisi') || q.includes('prepositional') || q.includes('of')) {
-    return `Prepositional Phrase seperti in, on, at, of, with, from, dan by hanyalah keterangan tambahan. Kata benda di dalamnya disebut Object of Preposition dan tidak akan pernah bisa menjadi Subject. Coret frasa tersebut agar Subject aslinya terlihat jelas!`;
+  if (q.includes('passive') || q.includes('pasif') || q.includes('v3')) {
+    return `Rumus kalimat pasif adalah [be: is/am/are/was/were/been/be] + [V3]. Gunakan bentuk pasif jika subjek kalimat adalah benda mati yang menerima perlakuan atau terdapat kata "by + pelaku" setelah kata kerja.`;
   }
-  if (q.includes('inversi') || q.includes('inversion') || q.includes('had') || q.includes('were') || q.includes('not only')) {
-    return `Inversion adalah senjata utama menuju skor 550+! Jika kalimat diawali ekspresi negatif seperti Never, Rarely, Seldom, Not only, atau Only after, balik susunannya menjadi Auxiliary diikuti Subject lalu Main Verb. Untuk pengandaian tanpa If, majukan Had, Were, atau Should ke depan!`;
+  if (q.includes('countable') || q.includes('uncountable') || q.includes('information') || q.includes('equipment')) {
+    return `Kata benda Uncountable seperti information, equipment, advice, furniture, evidence, dan research tidak pernah boleh ditambah akhiran "-s" dan selalu memakai quantifier "much / little / less" serta Verb tunggal!`;
+  }
+  if (q.includes('article') || q.includes('a ') || q.includes('an ') || q.includes('the')) {
+    return `Pilih "a" atau "an" berdasarkan bunyi pengucapannya, bukan huruf tulisannya: "a university" dan "a European" memakai "a" karena berbunyi konsonan Y, sedangkan "an hour" dan "an honest man" memakai "an" karena huruf H tidak dibaca.`;
+  }
+  if (q.includes('inversi') || q.includes('inversion') || q.includes('not only')) {
+    return `Inversion adalah kunci menembus skor 550+! Jika kalimat diawali kata negatif (Not only, Rarely, Seldom, Never) atau pengandaian tanpa If (Had, Were, Should), susunan Auxiliary dan Subject wajib dibalik!`;
   }
 
-  return `Pertanyaan bagus terkait materi ${topicTitle}! Dalam strategi TOEFL ITP, langkah pertama selalu memetakan Subject utama dan Main Verb kalimat sebelum melihat frasa pengganggu seperti Appositive, Prepositional Phrase, atau Participle.`;
+  return `Pertanyaan bagus terkait topik ${topicTitle}! Pastikan kamu selalu memetakan True Subject dan Main Verb kalimat terlebih dahulu sebelum memeriksa kesesuaian bentuk kata (Noun, Verb, Adjective, Adverb).`;
 }
 
 async function askGeminiLecturer(userPrompt, currentTopic, activeQuestion) {
@@ -1684,7 +2247,7 @@ async function askGeminiLecturer(userPrompt, currentTopic, activeQuestion) {
 
   const systemPrompt = `Kamu adalah "AI Dosen" (Prof. Arya Pratama, M.Ed.), dosen pembimbing TOEFL ITP spesialis strategi menuju skor 550+.
 Aturan wajib:
-1. Jawab sesuai bahasa yang digunakan mahasiswa (jika mahasiswa bertanya dalam bahasa Inggris, jawab full dalam bahasa Inggris; jika bertanya dalam bahasa Indonesia, jawab dalam bahasa Indonesia).
+1. Jawab sesuai bahasa yang digunakan mahasiswa (jika bertanya dalam bahasa Inggris, jawab full bahasa Inggris; jika bahasa Indonesia, jawab bahasa Indonesia).
 2. Ringkas, ramah, dan terstruktur (maksimal 3 paragraf pendek) tanpa simbol markdown aneh agar nyaman dibacakan suara.
 3. Konteks topik saat ini: "${currentTopic?.title || 'TOEFL Prep'}".
 ${activeQuestion ? `Mahasiswa sedang membahas soal: "${activeQuestion.prompt}" dengan kunci jawaban "${activeQuestion.correctKey}".` : ''}`;
@@ -1713,7 +2276,7 @@ ${activeQuestion ? `Mahasiswa sedang membahas soal: "${activeQuestion.prompt}" d
 }
 
 // ============================================================================
-// 6. ANIMATED 2D/SVG AI DOSEN AVATAR COMPONENT
+// 5. ANIMATED 2D/SVG AI DOSEN AVATAR COMPONENT
 // ============================================================================
 function LecturerAvatar({ state = 'idle', isMuted = false, activeLang = 'id-ID' }) {
   const statusLabel =
@@ -1833,7 +2396,7 @@ function LecturerAvatar({ state = 'idle', isMuted = false, activeLang = 'id-ID' 
 }
 
 // ============================================================================
-// 7. CERTIFICATE & PWA INSTALL MODALS
+// 6. CERTIFICATE & PWA INSTALL MODALS
 // ============================================================================
 function PwaInstallModal({ isOpen, onClose, deferredPrompt, onTriggerNativeInstall }) {
   const [copiedLink, setCopiedLink] = useState(false);
@@ -1920,8 +2483,7 @@ function PwaInstallModal({ isOpen, onClose, deferredPrompt, onTriggerNativeInsta
                 <span>Laptop / PC</span>
               </div>
               <p className="text-[11px] text-slate-600 leading-relaxed">
-                Klik ikon <strong>Install App</strong> di ujung kanan bilah alamat (URL bar)
-                Chrome atau Edge.
+                Klik menu <strong>⋮ → Transmisi, simpan, dan bagikan → Instal halaman sebagai aplikasi...</strong>
               </p>
             </div>
           </div>
@@ -2034,23 +2596,24 @@ function CertificateModal({ isOpen, onClose, studentName, onChangeName, score })
 }
 
 // ============================================================================
-// 8. MAIN APPLICATION COMPONENT
+// 7. MAIN APPLICATION COMPONENT
 // ============================================================================
 export default function App() {
   const initialSaved = useMemo(() => loadSavedProgress(), []);
 
   // Main Mode Navigation
-  const [appMode, setAppMode] = useState('curriculum'); // 'curriculum' | 'arena' | 'exam' | 'listening' | 'vault'
+  const [appMode, setAppMode] = useState('curriculum');
 
   // Curriculum & Sectioned Syllabus State
   const [selectedLevel, setSelectedLevel] = useState(
     initialSaved?.selectedLevel || 'Basic'
   );
-  const [selectedSection, setSelectedSection] = useState('All'); // 'All' | 'Listening' | 'Structure' | 'Reading'
+  const [selectedSection, setSelectedSection] = useState('All');
   const [selectedTopicId, setSelectedTopicId] = useState(
-    initialSaved?.selectedTopicId || 'basic-listen-1'
+    initialSaved?.selectedTopicId || 'basic-struct-sv'
   );
-  const [activeTab, setActiveTab] = useState('materi');
+  const [activeTab, setActiveTab] = useState('materi'); // 'materi' | 'contoh' | 'latihan'
+  const [topicExampleIndex, setTopicExampleIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [practiceSeed, setPracticeSeed] = useState(1);
   const [playedAudioIds, setPlayedAudioIds] = useState({});
@@ -2090,9 +2653,9 @@ export default function App() {
   const [isMuted, setIsMuted] = useState(false);
   const [speechRate, setSpeechRate] = useState(0.98);
   const [availableVoices, setAvailableVoices] = useState([]);
-  const [voiceMode, setVoiceMode] = useState('auto'); // 'auto' | 'id-ID' | 'en-US'
+  const [voiceMode, setVoiceMode] = useState('auto');
   const [liveSubtitle, setLiveSubtitle] = useState(
-    'Selamat datang! Saya AI Dosen pembimbingmu. Saya otomatis menyesuaikan bahasa Indonesia dan Inggris sesuai materi yang kita bahas.'
+    'Selamat datang! Saya AI Dosen pembimbingmu. Silabus lengkap 15 modul terstruktur siap kamu pelajari beserta contoh soal per topik!'
   );
 
   // Chat & Mic State
@@ -2100,7 +2663,7 @@ export default function App() {
     {
       id: 'welcome-1',
       sender: 'dosen',
-      text: 'Halo! Saya siap membantumu menembus skor TOEFL 550+. Pilih silabus per level (Listening, Structure, Reading), latih 20 soal acak per section, atau uji kemampuan di Arena Game!'
+      text: 'Halo! Silabus lengkap sudah tersedia: S-V Agreement, Singular/Plural, Countable/Uncountable, Articles (a/an/the), Tenses, Passive Voice, Gerund vs. Infinitive, Clauses, Parallelism, Inversion, Listening Part A–C, dan Reading Strategies. Klik tombol "Latih Contoh Soal Topik Ini" pada setiap modul!'
     }
   ]);
   const [chatInput, setChatInput] = useState('');
@@ -2120,7 +2683,7 @@ export default function App() {
   const [vocabCurrentScore, setVocabCurrentScore] = useState(0);
   const [vocabFeedback, setVocabFeedback] = useState(null);
 
-  // Timed Mini-Test Simulation (6 Minutes for 8 Questions)
+  // Timed Mini-Test Simulation
   const [examStarted, setExamStarted] = useState(false);
   const [examSubmitted, setExamSubmitted] = useState(false);
   const [examSecondsLeft, setExamSecondsLeft] = useState(360);
@@ -2140,7 +2703,7 @@ export default function App() {
 
   // Derived Curriculum Values
   const levels = ['Basic', 'Intermediate', 'Advance'];
-  const sections = ['All', 'Listening', 'Structure', 'Reading'];
+  const sections = ['All', 'Structure', 'Listening', 'Reading'];
 
   const currentTopic = useMemo(
     () => CURRICULUM.find((t) => t.id === selectedTopicId) || CURRICULUM[0],
@@ -2165,17 +2728,11 @@ export default function App() {
         ...q,
         level: t.level,
         section: t.section,
-        sourceTag: `Kurikulum ${t.code}`
+        sourceTag: `Modul ${t.code}: ${t.shortTitle}`
       }))
     );
 
-    const baseLongman = LONGMAN_QUESTION_BANK.map((q) => ({
-      ...q,
-      section: q.section === 'Written Expression' ? 'Structure' : q.section,
-      sourceTag: `Bank Soal ${q.level}`
-    }));
-
-    // 100 Listening Questions Pool (Part A, B, C Skills)
+    // 100 Listening Questions Pool
     const listeningTemplates = [
       {
         level: 'Basic',
@@ -2219,22 +2776,22 @@ export default function App() {
       },
       {
         level: 'Intermediate',
-        skillTag: 'Listening Skill 7–10: Negative Expressions & Wishes',
-        man: 'Are you able to attend the guest lecture on marine biology tonight?',
-        woman: 'I wish I didn’t have to work the late shift at the hospital.',
-        q: 'What does the woman imply?',
+        skillTag: 'Listening Skill 7–15: Wishes & Agreement Idioms',
+        man: 'The traffic on the highway this morning was unbelievable.',
+        woman: 'You can say that again!',
+        q: 'What does the woman mean?',
         opts: [
-          'She will attend the lecture after her shift.',
-          'She cannot go to the lecture because she has to work.',
-          'She works as a marine biologist at the hospital.',
-          'The lecture was rescheduled for tomorrow night.'
+          'She did not hear what the man said.',
+          'She wants the man to repeat his sentence.',
+          'She strongly agrees with the man about the traffic.',
+          'She took a different highway this morning.'
         ],
-        ans: 'B',
-        exp: 'Pernyataan "I wish I didn’t have to work" menyiratkan kenyataan bahwa dia harus bekerja sehingga tidak bisa hadir.'
+        ans: 'C',
+        exp: '"You can say that again!" adalah idiom persetujuan penuh.'
       },
       {
         level: 'Advance',
-        skillTag: 'Listening Skill 11–17: Untrue Conditions & Idioms',
+        skillTag: 'Listening Skill 16–27: Conditional & Academic Talks',
         man: 'Why didn’t Mark catch the morning flight to Chicago?',
         woman: 'Had he set his alarm clock, he wouldn’t have missed the shuttle bus.',
         q: 'What does the woman say about Mark?',
@@ -2260,7 +2817,7 @@ export default function App() {
         skillTag: tpl.skillTag,
         sourceTag: `Bank Listening #${i + 1}`,
         audioScript: `Man: ${tpl.man} Woman: ${tpl.woman} Question: ${tpl.q}`,
-        prompt: `[Audio Item #${i + 1} — Set ${setNum}] Dengarkan audio dialog dengan saksama (hanya 1x putar), lalu pilih pernyataan yang paling tepat! Question: ${tpl.q}`,
+        prompt: `[Audio Item #${i + 1} • Set ${setNum}] Dengarkan audio dialog (1x putar), lalu pilih pernyataan yang paling tepat! Question: ${tpl.q}`,
         translationId: `Dialog Audio #${i + 1}: Dengarkan percakapan antara pembicara pria dan wanita lalu tentukan maksud tersirat pembicara kedua.`,
         hintId: 'Perhatikan kata kunci pada kalimat pembicara kedua dan cari sinonimnya.',
         options: tpl.opts.map((txt, idx) => ({ key: letters[idx], text: txt })),
@@ -2281,11 +2838,11 @@ export default function App() {
       };
     });
 
-    // 100 Structure & Written Expression Questions Pool
+    // 100 Structure & Written Expression Questions Pool (Covering ALL Topics)
     const structureTemplates = [
       {
         level: 'Basic',
-        skillTag: 'Structure Skill 1–3: Subject-Verb & Appositives',
+        skillTag: 'S-1.1: Subject-Verb & Prepositional Phrases',
         prompt: 'The discovery of deep-sea hydrothermal vents _______ marine biologists to rethink the origins of life.',
         trans: 'Penemuan lubang hidrotermal laut dalam _______ ahli biologi laut untuk memikirkan kembali asal-usul kehidupan.',
         opts: ['have forced', 'has forced', 'forcing', 'were forcing'],
@@ -2297,43 +2854,65 @@ export default function App() {
       },
       {
         level: 'Basic',
-        skillTag: 'Structure Skill 4–5: Participles (Active vs Passive)',
-        prompt: 'Artifacts _______ from the sunken Roman merchant ship are now displayed in the national museum.',
-        trans: 'Artefak-artefak yang diangkat dari kapal dagang Romawi yang tenggelam kini dipajang di museum nasional.',
-        opts: ['recovering', 'recovered', 'were recovered', 'they recovered'],
-        ans: 'B',
-        subj: 'Artifacts',
-        verb: 'are displayed (Main Verb sudah ada)',
-        trap: 'Past Participle "recovered" (V3 pasif) menjelaskan Artifacts',
-        formula: '[Subject] + [V3 Pasif] + [Main Verb].'
+        skillTag: 'S-1.2: Countable vs. Uncountable & Irregular Plurals',
+        prompt: 'Identify the error: Modern (A) space probes have transmitted (B) much valuable (C) informations about the outer (D) planets.',
+        trans: 'Identifikasi kesalahan: Wahana antariksa modern telah mengirimkan banyak informasi berharga tentang planet luar.',
+        opts: [
+          '(A) space probes',
+          '(B) much',
+          '(C) informations → salah, harusnya uncountable "information"',
+          '(D) planets'
+        ],
+        ans: 'C',
+        subj: 'Modern space probes',
+        verb: 'have transmitted',
+        trap: 'Uncountable noun "information" tidak boleh ditambah "-s"',
+        formula: 'Uncountable Noun (information, equipment, advice) = TANPA "-s".'
       },
       {
-        level: 'Intermediate',
-        skillTag: 'Structure Skill 6–10: Connectors & Noun Clauses',
-        prompt: '_______ astronomers can measure the brightness of distant stars determines how accurately they calculate cosmic distances.',
-        trans: 'Bagaimana para astronom dapat mengukur kecerahan bintang jauh menentukan seberapa akurat mereka menghitung jarak kosmik.',
-        opts: ['How', 'What', 'Which', 'That it'],
+        level: 'Basic',
+        skillTag: 'S-1.3: Articles (A / An / The)',
+        prompt: 'Identify the error: It takes nearly (A) a hour for (B) a commercial aircraft to reach (C) an altitude of (D) 35,000 feet.',
+        trans: 'Identifikasi kesalahan: Dibutuhkan hampir satu jam bagi pesawat komersial untuk mencapai ketinggian 35.000 kaki.',
+        opts: [
+          '(A) a hour → seharusnya "an hour"',
+          '(B) a commercial',
+          '(C) an altitude',
+          '(D) 35,000 feet'
+        ],
         ans: 'A',
-        subj: 'How astronomers can measure... (Noun Clause Subject)',
-        verb: 'can measure | determines (Main Verb)',
-        trap: 'Noun clause sebagai subjek kalimat lengkap membutuhkan connector "How"',
-        formula: '[How + S + V] + [Main Verb].'
+        subj: 'It',
+        verb: 'takes',
+        trap: 'Silent "h" pada "hour" diawali bunyi vokal sehingga wajib "an"',
+        formula: 'Silent "h" (hour, honest, honor) → AN + Noun.'
       },
       {
         level: 'Intermediate',
-        skillTag: 'Structure Skill 11–12: Adjective Clauses',
-        prompt: 'Lake Baikal in Siberia, _______ contains roughly twenty percent of the world’s unfrozen freshwater, is the deepest lake on Earth.',
-        trans: 'Danau Baikal di Siberia, yang menampung sekitar dua puluh persen air tawar tak beku di dunia, adalah danau terdalam di Bumi.',
-        opts: ['that', 'which', 'where', 'what'],
+        skillTag: 'S-2.1: Passive Voice (Be + V3)',
+        prompt: 'The first successful telegraph message _______ across the Atlantic Ocean in 1858.',
+        trans: 'Pesan telegraf pertama yang berhasil _______ melintasi Samudra Atlantik pada tahun 1858.',
+        opts: ['transmitted', 'was transmitted', 'has transmitted', 'transmitting'],
         ans: 'B',
-        subj: 'Lake Baikal',
-        verb: 'contains | is',
-        trap: 'Setelah tanda koma dilarang keras memakai "that" — wajib "which"',
-        formula: '[Noun] + , + WHICH + [Verb] + , + [Main Verb].'
+        subj: 'The first successful telegraph message',
+        verb: 'was transmitted (Simple Past Passive)',
+        trap: 'Benda mati menerima perlakuan (Passive: was + V3) & tahun lampau 1858',
+        formula: 'Benda mati sebagai Subject + Tahun Lampau → was/were + V3.'
+      },
+      {
+        level: 'Intermediate',
+        skillTag: 'S-2.2: Gerund (V-ing) vs. Infinitive',
+        prompt: 'Researchers are looking forward to _______ the preliminary results of the clinical trial next month.',
+        trans: 'Para peneliti menantikan untuk menerbitkan hasil awal uji klinis tersebut bulan depan.',
+        opts: ['publish', 'publishing', 'published', 'be published'],
+        ans: 'B',
+        subj: 'Researchers',
+        verb: 'are looking forward to + publishing',
+        trap: 'Pada frasa "look forward to", kata "to" adalah preposisi (+ V-ing)',
+        formula: 'look forward to / be accustomed to / contribute to + V-ing.'
       },
       {
         level: 'Advance',
-        skillTag: 'Structure Skill 15–19: Negative & Conditional Inversion',
+        skillTag: 'S-3.1 & 3.2: Inversion & Word Forms',
         prompt: 'Seldom _______ such an extraordinary alignment of five visible planets in the night sky.',
         trans: 'Jarang sekali _______ kesejajaran luar biasa dari lima planet yang terlihat di langit malam.',
         opts: ['astronomers have observed', 'have astronomers observed', 'astronomers observing', 'observed astronomers'],
@@ -2342,23 +2921,6 @@ export default function App() {
         verb: 'have ... observed (Inverted Present Perfect)',
         trap: 'Kata negatif "Seldom" di awal kalimat memicu inversi Auxiliary + Subject',
         formula: 'Seldom + [have/has/do/does] + [Subject] + [Verb].'
-      },
-      {
-        level: 'Advance',
-        skillTag: 'Written Expression: Parallelism & Word Form',
-        prompt: 'Identify the error: Modern (A) telecommunications satellites relay (B) digitally signals, television broadcasts, and (C) international telephone (D) calls.',
-        trans: 'Identifikasi kesalahan: Satelit telekomunikasi modern meneruskan sinyal digital, siaran televisi, dan panggilan telepon internasional.',
-        opts: [
-          '(A) telecommunications',
-          '(B) digitally → seharusnya adjective "digital"',
-          '(C) international',
-          '(D) calls'
-        ],
-        ans: 'B',
-        subj: 'Modern telecommunications satellites',
-        verb: 'relay',
-        trap: 'Adverb "digitally" salah menjelaskan kata benda "signals" — harus adjective "digital"',
-        formula: 'Adjective (digital) + Noun (signals).'
       }
     ];
 
@@ -2374,7 +2936,7 @@ export default function App() {
         sourceTag: `Bank Structure #${i + 1}`,
         prompt: `[Structure #${i + 1} • Set ${setNum}] ${tpl.prompt}`,
         translationId: tpl.trans,
-        hintId: `Perhatikan struktur utama: ${tpl.formula}`,
+        hintId: `Perhatikan rumus topik ini: ${tpl.formula}`,
         options: tpl.opts.map((txt, idx) => ({ key: letters[idx], text: txt })),
         correctKey: tpl.ans,
         breakdown: {
@@ -2397,7 +2959,7 @@ export default function App() {
     const readingTemplates = [
       {
         level: 'Basic',
-        skillTag: 'Reading Skill 1–2: Main Idea & Organization',
+        skillTag: 'R-1.1: Main Idea & Organization',
         prompt: 'Passage Excerpt: "Photosynthesis allows green plants to convert solar energy into chemical energy stored in glucose molecules, releasing oxygen as a vital byproduct." — What is the main point of this statement?',
         trans: 'Kutipan Bacaan: "Fotosintesis memungkinkan tumbuhan hijau mengubah energi matahari menjadi energi kimia yang tersimpan dalam molekul glukosa, melepaskan oksigen sebagai produk sampingan yang vital." — Apa poin utama pernyataan ini?',
         opts: [
@@ -2412,7 +2974,7 @@ export default function App() {
       },
       {
         level: 'Basic',
-        skillTag: 'Reading Skill 3: Stated Detail Questions',
+        skillTag: 'R-1.2: Stated Details & Pronoun Referents',
         prompt: 'Passage Excerpt: "Unlike continental crust, which is composed largely of granite and averages 35 kilometers in thickness, oceanic crust consists primarily of dense basalt and is only about 7 kilometers thick." — According to the excerpt, oceanic crust is:',
         trans: 'Kutipan Bacaan: "Berbeda dengan kerak benua yang sebagian besar tersusun dari granit dan rata-rata setebal 35 kilometer, kerak samudra terutama terdiri dari basal padat dan tebalnya hanya sekitar 7 kilometer." — Menurut kutipan, kerak samudra adalah:',
         opts: [
@@ -2427,7 +2989,7 @@ export default function App() {
       },
       {
         level: 'Intermediate',
-        skillTag: 'Reading Skill 4–5: Unstated Details (NOT / EXCEPT)',
+        skillTag: 'R-2.1: Unstated Details (NOT / EXCEPT)',
         prompt: 'Passage Excerpt: "Early mechanical clocks in fourteenth-century Europe lacked minute hands, relied on heavy falling weights, and required frequent winding by tower caretakers." — All of the following are mentioned about early mechanical clocks EXCEPT:',
         trans: 'Kutipan Bacaan: "Jam mekanik awal di Eropa abad keempat belas tidak memiliki jarum menit, mengandalkan pemberat jatuh yang berat, dan memerlukan pemutaran rutin oleh penjaga menara." — Semua hal berikut disebutkan tentang jam mekanik awal KECUALI:',
         opts: [
@@ -2442,7 +3004,7 @@ export default function App() {
       },
       {
         level: 'Intermediate',
-        skillTag: 'Reading Skill 8–11: Vocabulary in Context',
+        skillTag: 'R-2.1: Vocabulary in Context',
         prompt: 'Passage Excerpt: "Because desert rainfall is sporadic and unpredictable, perennial cacti store vast reserves of water inside their succulent stems." — The word "sporadic" is closest in meaning to:',
         trans: 'Kutipan Bacaan: "Karena curah hujan gurun bersifat sporadis dan tidak dapat diprediksi, kaktus menahun menyimpan cadangan air yang besar di dalam batangnya." — Kata "sporadic" paling dekat artinya dengan:',
         opts: ['irregular', 'abundant', 'continuous', 'freezing'],
@@ -2452,7 +3014,7 @@ export default function App() {
       },
       {
         level: 'Advance',
-        skillTag: 'Reading Skill 6–7 & 12–13: Inference, Tone & Purpose',
+        skillTag: 'R-3.1: Inference, Tone & Purpose',
         prompt: 'Passage Excerpt: "Although early geologists dismissed continental drift because Alfred Wegener could not identify a physical mechanism strong enough to move continents, modern plate tectonics later vindicated his core hypothesis." — What can be inferred from this passage?',
         trans: 'Kutipan Bacaan: "Meskipun ahli geologi awal menolak pergeseran benua karena Alfred Wegener tidak dapat mengidentifikasi mekanisme fisik yang cukup kuat untuk menggerakkan benua, tektonik lempeng modern kemudian membenarkan hipotesis intinya." — Apa yang dapat disimpulkan dari kutipan ini?',
         opts: [
@@ -2500,7 +3062,6 @@ export default function App() {
 
     return [
       ...baseCurriculum,
-      ...baseLongman,
       ...generatedListening,
       ...generatedStructure,
       ...generatedReading
@@ -2548,8 +3109,11 @@ export default function App() {
     return map;
   }, [fullQuestionBank]);
 
-  const currentQuestion =
-    activePracticeQuestions[currentQuestionIndex] || activePracticeQuestions[0];
+  // Active Question depends on whether user is in 'contoh' (Topic-Specific Examples) or 'latihan' (20-Item Random Section Drill)
+  const activeQuestion =
+    activeTab === 'contoh'
+      ? currentTopic.questions[topicExampleIndex] || currentTopic.questions[0]
+      : activePracticeQuestions[currentQuestionIndex] || activePracticeQuestions[0];
 
   // Progress & Score Calculation
   const totalQuestionsCount = useMemo(
@@ -2570,16 +3134,14 @@ export default function App() {
     return Math.min(565, base + curriculumBonus + activityBonus);
   }, [correctAnswersCount, gameHighScore, vocabHighScore, listeningScore]);
 
-  // Register PWA Manifest & Capture beforeinstallprompt
+  // Capture beforeinstallprompt
   useEffect(() => {
     if (!isBrowser) return;
-
     const handleBeforeInstall = (e) => {
       e.preventDefault();
       setDeferredInstallPrompt(e);
     };
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
     };
@@ -2593,7 +3155,7 @@ export default function App() {
       setDeferredInstallPrompt(null);
       setShowPwaModal(false);
     } catch {
-      // Keep modal open for manual instructions
+      // Keep modal open
     }
   };
 
@@ -2739,6 +3301,7 @@ export default function App() {
     if (firstTopic) {
       setSelectedTopicId(firstTopic.id);
       setActiveTab('materi');
+      setTopicExampleIndex(0);
       setCurrentQuestionIndex(0);
       setShowHint(false);
     }
@@ -2756,18 +3319,20 @@ export default function App() {
     if (matching) {
       setSelectedTopicId(matching.id);
       setActiveTab('materi');
+      setTopicExampleIndex(0);
       setCurrentQuestionIndex(0);
       setShowHint(false);
     }
   };
 
-  const handleSelectTopic = (topicId) => {
+  const handleSelectTopic = (topicId, targetTab = 'materi') => {
     stopSpeaking();
     const found = CURRICULUM.find((t) => t.id === topicId);
     if (found) {
       setSelectedLevel(found.level);
       setSelectedTopicId(found.id);
-      setActiveTab('materi');
+      setActiveTab(targetTab);
+      setTopicExampleIndex(0);
       setCurrentQuestionIndex(0);
       setShowHint(false);
     }
@@ -2794,21 +3359,23 @@ export default function App() {
   };
 
   const handleAnswerSelect = (optionKey) => {
-    if (userAnswers[currentQuestion.id]) return;
+    if (!activeQuestion || userAnswers[activeQuestion.id]) return;
 
-    const isCorrect = optionKey === currentQuestion.correctKey;
+    const isCorrect = optionKey === activeQuestion.correctKey;
     const updatedAnswers = {
       ...userAnswers,
-      [currentQuestion.id]: { selectedKey: optionKey, isCorrect }
+      [activeQuestion.id]: { selectedKey: optionKey, isCorrect }
     };
     setUserAnswers(updatedAnswers);
 
-    if (!isCorrect && !bookmarkedIds.includes(currentQuestion.id)) {
-      setBookmarkedIds((prev) => [...prev, currentQuestion.id]);
+    if (!isCorrect && !bookmarkedIds.includes(activeQuestion.id)) {
+      setBookmarkedIds((prev) => [...prev, activeQuestion.id]);
     }
 
-    const allAnswered = activePracticeQuestions.every((q) => Boolean(updatedAnswers[q.id]));
-    if (allAnswered) {
+    const allTopicQsDone = currentTopic.questions.every((q) =>
+      Boolean(updatedAnswers[q.id])
+    );
+    if (allTopicQsDone) {
       setCompletedTopics((prev) => ({ ...prev, [currentTopic.id]: true }));
     }
 
@@ -2816,21 +3383,22 @@ export default function App() {
       setAvatarState('encouraging');
       setStreakCount((s) => s + 1);
       speakText(
-        `Tepat sekali! Jawaban "${optionKey}" benar. ${currentQuestion.voiceWalkthrough}`
+        `Tepat sekali! Jawaban "${optionKey}" benar. ${activeQuestion.voiceWalkthrough}`
       );
     } else {
       setAvatarState('thinking');
       speakText(
-        `Belum tepat, opsi "${optionKey}" adalah jebakan soal. Soal ini otomatis saya simpan ke daftar Review Saya. ${currentQuestion.voiceWalkthrough}`
+        `Belum tepat, opsi "${optionKey}" adalah jebakan soal. Soal ini otomatis saya simpan ke daftar Review Saya. ${activeQuestion.voiceWalkthrough}`
       );
     }
   };
 
   const handleChallengeLecturer = (wrongKey) => {
+    if (!activeQuestion) return;
     const specificReason =
-      currentQuestion.optionAnalysis?.[wrongKey] ||
+      activeQuestion.optionAnalysis?.[wrongKey] ||
       `Opsi ${wrongKey} tidak sesuai dengan struktur tata bahasa kalimat tersebut.`;
-    const promptMsg = `Tantang Dosen: Kenapa bukan opsi ${wrongKey} pada soal "${currentQuestion.prompt.slice(
+    const promptMsg = `Tantang Dosen: Kenapa bukan opsi ${wrongKey} pada soal "${activeQuestion.prompt.slice(
       0,
       55
     )}..."?`;
@@ -2859,7 +3427,7 @@ export default function App() {
     const reply = await askGeminiLecturer(
       trimmed,
       currentTopic,
-      activeTab === 'latihan' ? currentQuestion : null
+      activeTab !== 'materi' ? activeQuestion : null
     );
 
     setChatMessages((prev) => [
@@ -3023,7 +3591,7 @@ export default function App() {
   };
 
   // ============================================================================
-  // 9. RENDER
+  // 8. RENDER
   // ============================================================================
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans antialiased overflow-x-hidden">
@@ -3051,7 +3619,7 @@ export default function App() {
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="lg:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 border border-slate-200 shrink-0"
-              aria-label="Buka Menu"
+              aria-label="Buka Daftar Silabus"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -3070,12 +3638,11 @@ export default function App() {
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 hidden sm:block truncate">
-                Silabus Listening • Structure • Reading &amp; Latihan 20 Soal Acak
+                Silabus Lengkap 15 Modul • Contoh Soal Per Topik • 300+ Bank Soal
               </p>
             </div>
           </div>
 
-          {/* Install App (PWA), Streak & Readiness Meter */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               type="button"
@@ -3115,12 +3682,12 @@ export default function App() {
           </div>
         </div>
 
-        {/* PRIMARY FEATURE NAVIGATION BAR (5 MODES) */}
+        {/* PRIMARY FEATURE NAVIGATION BAR */}
         <div className="bg-slate-100/95 border-t border-slate-200 px-3 sm:px-6 py-2">
           <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
             <nav className="flex items-center gap-1.5 overflow-x-auto pb-0.5 sm:pb-0 w-full sm:w-auto">
               {[
-                { id: 'curriculum', label: 'Silabus & Latihan 20 Soal', icon: BookOpen },
+                { id: 'curriculum', label: 'Silabus Lengkap & Contoh Soal', icon: BookOpen },
                 { id: 'arena', label: 'Arena Game', icon: Gamepad2 },
                 { id: 'exam', label: 'Simulasi Timer', icon: Timer },
                 { id: 'listening', label: 'Lab Listening', icon: Headphones },
@@ -3185,7 +3752,7 @@ export default function App() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200">
-              <span className="font-extrabold text-slate-900">Silabus Per Level</span>
+              <span className="font-extrabold text-slate-900">Semua Modul Silabus (15)</span>
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
@@ -3206,7 +3773,7 @@ export default function App() {
                       type="button"
                       onClick={() => {
                         setAppMode('curriculum');
-                        handleSelectTopic(topic.id);
+                        handleSelectTopic(topic.id, 'materi');
                       }}
                       className={`w-full text-left p-2.5 rounded-xl text-xs font-semibold border ${
                         selectedTopicId === topic.id
@@ -3238,7 +3805,7 @@ export default function App() {
           {/* LEFT WORKSPACE (8 COLS) */}
           <div className="lg:col-span-8 space-y-4 sm:space-y-5 min-w-0">
             {/* ================================================================
-                MODE 1: SILABUS PER LEVEL (KELOMPOK LISTENING, STRUCTURE, READING)
+                MODE 1: SILABUS LENGKAP & CONTOH SOAL PER TOPIK
                ================================================================ */}
             {appMode === 'curriculum' && (
               <>
@@ -3257,23 +3824,23 @@ export default function App() {
                           }`}
                         >
                           {lvl === 'Basic'
-                            ? '1. Basic'
+                            ? '1. Basic (8 Modul)'
                             : lvl === 'Intermediate'
-                            ? '2. Intermediate'
-                            : '3. Advance (550+)'}
+                            ? '2. Intermediate (6 Modul)'
+                            : '3. Advance 550+ (4 Modul)'}
                         </button>
                       ))}
                     </div>
 
                     <span className="text-[11px] font-bold text-slate-500">
-                      {correctAnswersCount}/{totalQuestionsCount} Bank Soal Terjawab Benar
+                      {correctAnswersCount}/{totalQuestionsCount} Total Bank Soal
                     </span>
                   </div>
 
-                  {/* Section Filter Tabs: Semua | Listening | Structure | Reading */}
+                  {/* Section Filter Tabs: Semua | Structure | Listening | Reading */}
                   <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
                     <span className="text-[11px] font-extrabold text-slate-400 uppercase mr-1">
-                      Kelompok Materi:
+                      Filter Section:
                     </span>
                     {sections.map((sec) => {
                       const active = selectedSection === sec;
@@ -3288,14 +3855,16 @@ export default function App() {
                               : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                           }`}
                         >
-                          {sec === 'All' ? 'Semua Section' : sec}
+                          {sec === 'All'
+                            ? `Semua Section (${CURRICULUM.filter((t) => t.level === selectedLevel).length} Modul)`
+                            : sec}
                         </button>
                       );
                     })}
                   </div>
 
-                  {/* Topic Cards in Selected Level & Section */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  {/* Topic Cards in Selected Level & Section (With Direct "Contoh Soal" Click) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {topicsInCurrentLevel.map((topic) => {
                       const isActive = topic.id === selectedTopicId;
                       const isDone = Boolean(completedTopics[topic.id]);
@@ -3306,11 +3875,10 @@ export default function App() {
                           ? 'bg-blue-100 text-[#1E3A8A] border-blue-200'
                           : 'bg-emerald-100 text-emerald-800 border-emerald-200';
                       return (
-                        <button
+                        <div
                           key={topic.id}
-                          type="button"
-                          onClick={() => handleSelectTopic(topic.id)}
-                          className={`text-left p-3 rounded-xl border transition-all flex flex-col justify-between gap-1.5 ${
+                          onClick={() => handleSelectTopic(topic.id, 'materi')}
+                          className={`cursor-pointer text-left p-3 rounded-xl border transition-all flex flex-col justify-between gap-2 ${
                             isActive
                               ? 'bg-blue-50/90 border-[#1E3A8A] ring-2 ring-[#1E3A8A]/15'
                               : 'bg-white border-slate-200 hover:border-slate-300'
@@ -3322,24 +3890,42 @@ export default function App() {
                             >
                               {topic.section} • {topic.code}
                             </span>
-                            {isDone && (
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                            )}
+                            <div className="flex items-center gap-1.5">
+                              {isDone && (
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              )}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSelectTopic(topic.id, 'contoh');
+                                }}
+                                className="px-2 py-0.5 rounded-md bg-amber-100 hover:bg-amber-200 text-amber-950 border border-amber-300 text-[10px] font-extrabold transition-colors"
+                              >
+                                Contoh Soal ({topic.questions.length})
+                              </button>
+                            </div>
                           </div>
-                          <div
-                            className={`text-xs font-bold leading-snug ${
-                              isActive ? 'text-[#1E3A8A]' : 'text-slate-800'
-                            }`}
-                          >
-                            {topic.shortTitle}
+
+                          <div>
+                            <div
+                              className={`text-xs font-extrabold leading-snug ${
+                                isActive ? 'text-[#1E3A8A]' : 'text-slate-900'
+                              }`}
+                            >
+                              {topic.shortTitle}
+                            </div>
+                            <div className="text-[10px] text-slate-500 mt-0.5">
+                              {topic.moduleRef}
+                            </div>
                           </div>
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
                 </div>
 
-                {/* Active Topic Header & Mode Tabs */}
+                {/* Active Topic Header & 3 Mode Tabs */}
                 <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs">
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                     <div className="flex flex-wrap items-center gap-2">
@@ -3356,21 +3942,39 @@ export default function App() {
                     Topik {currentTopic.code}: {currentTopic.title}
                   </h2>
 
-                  <div className="mt-4 grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
+                  <div className="mt-4 grid grid-cols-3 gap-1.5 sm:gap-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
                     <button
                       type="button"
                       onClick={() => {
                         stopSpeaking();
                         setActiveTab('materi');
                       }}
-                      className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+                      className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-[11px] sm:text-xs font-extrabold transition-all ${
                         activeTab === 'materi'
                           ? 'bg-white text-[#1E3A8A] shadow-xs'
                           : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
-                      <BookOpen className="w-4 h-4" />
-                      <span>1. Materi Strategi</span>
+                      <BookOpen className="w-3.5 h-3.5 shrink-0" />
+                      <span>1. Materi &amp; Rumus</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        stopSpeaking();
+                        setActiveTab('contoh');
+                        setTopicExampleIndex(0);
+                        setShowHint(false);
+                      }}
+                      className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-[11px] sm:text-xs font-extrabold transition-all ${
+                        activeTab === 'contoh'
+                          ? 'bg-amber-400 text-slate-950 shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <ListChecks className="w-3.5 h-3.5 shrink-0" />
+                      <span>2. Contoh Soal Topik ({currentTopic.questions.length})</span>
                     </button>
 
                     <button
@@ -3381,19 +3985,19 @@ export default function App() {
                         setCurrentQuestionIndex(0);
                         setShowHint(false);
                       }}
-                      className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+                      className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-[11px] sm:text-xs font-extrabold transition-all ${
                         activeTab === 'latihan'
                           ? 'bg-white text-[#1E3A8A] shadow-xs'
                           : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
-                      <Target className="w-4 h-4" />
-                      <span>2. Latihan Acak (20 Soal)</span>
+                      <Target className="w-3.5 h-3.5 shrink-0" />
+                      <span>3. Bank 20 Soal Acak</span>
                     </button>
                   </div>
                 </div>
 
-                {/* TAB 1: MATERI */}
+                {/* TAB 1: MATERI & RUMUS LENGKAP */}
                 {activeTab === 'materi' && (
                   <div className="space-y-4">
                     {currentTopic.passage && (
@@ -3500,7 +4104,21 @@ export default function App() {
                       </div>
                     ))}
 
-                    <div className="flex justify-end">
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          stopSpeaking();
+                          setActiveTab('contoh');
+                          setTopicExampleIndex(0);
+                          setShowHint(false);
+                        }}
+                        className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs sm:text-sm font-extrabold shadow-sm transition-all"
+                      >
+                        <ListChecks className="w-4 h-4" />
+                        <span>Latih Contoh Soal Topik Ini ({currentTopic.questions.length} Soal)</span>
+                      </button>
+
                       <button
                         type="button"
                         onClick={() => {
@@ -3510,56 +4128,62 @@ export default function App() {
                         }}
                         className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#1E3A8A] hover:bg-blue-900 text-white text-xs sm:text-sm font-bold shadow-sm transition-all"
                       >
-                        <span>Lanjut Latihan 20 Soal Acak ({currentTopic.section})</span>
+                        <span>Bank 20 Soal Acak ({currentTopic.section})</span>
                         <ArrowRight className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
                 )}
 
-                {/* TAB 2: LATIHAN 20 SOAL ACAK PER SECTION */}
-                {activeTab === 'latihan' && currentQuestion && (
+                {/* TAB 2 & TAB 3: CONTOH SOAL TOPIK INI OR 20-ITEM RANDOM DRILL */}
+                {(activeTab === 'contoh' || activeTab === 'latihan') && activeQuestion && (
                   <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs space-y-5">
                     <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="px-2.5 py-1 rounded-lg text-xs font-extrabold bg-blue-50 text-[#1E3A8A] border border-blue-200">
-                          Soal {currentQuestionIndex + 1} / {activePracticeQuestions.length}
-                        </span>
+                        {activeTab === 'contoh' ? (
+                          <span className="px-2.5 py-1 rounded-lg text-xs font-extrabold bg-amber-100 text-amber-950 border border-amber-300">
+                            Contoh Soal Topik {currentTopic.code}: {topicExampleIndex + 1} /{' '}
+                            {currentTopic.questions.length}
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-1 rounded-lg text-xs font-extrabold bg-blue-50 text-[#1E3A8A] border border-blue-200">
+                            Bank Acak: {currentQuestionIndex + 1} / {activePracticeQuestions.length}
+                          </span>
+                        )}
                         <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700">
-                          {currentQuestion.skillTag}
-                        </span>
-                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-amber-100 text-amber-900">
-                          Pool {currentTopic.section}: 100+ Soal
+                          {activeQuestion.skillTag}
                         </span>
                       </div>
 
                       <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={handleReshufflePractice}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-extrabold bg-[#1E3A8A] text-white hover:bg-blue-900"
-                          title="Ambil 20 soal acak baru dari bank soal"
-                        >
-                          <RefreshCw className="w-3.5 h-3.5" />
-                          <span>Acak 20 Soal Baru</span>
-                        </button>
+                        {activeTab === 'latihan' && (
+                          <button
+                            type="button"
+                            onClick={handleReshufflePractice}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-extrabold bg-[#1E3A8A] text-white hover:bg-blue-900"
+                            title="Ambil 20 soal acak baru dari bank soal"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5" />
+                            <span>Acak 20 Soal Baru</span>
+                          </button>
+                        )}
 
                         <button
                           type="button"
-                          onClick={() => toggleBookmark(currentQuestion.id)}
+                          onClick={() => toggleBookmark(activeQuestion.id)}
                           className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${
-                            bookmarkedIds.includes(currentQuestion.id)
+                            bookmarkedIds.includes(activeQuestion.id)
                               ? 'bg-amber-100 text-amber-900 border-amber-300'
                               : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                           }`}
                         >
-                          {bookmarkedIds.includes(currentQuestion.id) ? (
+                          {bookmarkedIds.includes(activeQuestion.id) ? (
                             <BookmarkCheck className="w-3.5 h-3.5 text-amber-700" />
                           ) : (
                             <Bookmark className="w-3.5 h-3.5" />
                           )}
                           <span>
-                            {bookmarkedIds.includes(currentQuestion.id)
+                            {bookmarkedIds.includes(activeQuestion.id)
                               ? 'Tersimpan'
                               : 'Simpan'}
                           </span>
@@ -3567,44 +4191,74 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Grid Nomor 1 - 20 */}
-                    <div className="grid grid-cols-10 gap-1.5">
-                      {activePracticeQuestions.map((q, idx) => {
-                        const answered = userAnswers[q.id];
-                        return (
-                          <button
-                            key={q.id}
-                            type="button"
-                            onClick={() => {
-                              stopSpeaking();
-                              setCurrentQuestionIndex(idx);
-                              setShowHint(false);
-                            }}
-                            className={`h-7 rounded-lg text-[11px] font-extrabold border transition-all ${
-                              idx === currentQuestionIndex
-                                ? 'bg-[#1E3A8A] text-white border-[#1E3A8A] ring-2 ring-[#1E3A8A]/20'
-                                : answered
-                                ? answered.isCorrect
-                                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                                  : 'bg-rose-100 text-rose-800 border-rose-300'
-                                : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                            }`}
-                          >
-                            {idx + 1}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    {/* Question Selector Strip */}
+                    {activeTab === 'contoh' ? (
+                      <div className="flex items-center gap-2">
+                        {currentTopic.questions.map((q, idx) => {
+                          const answered = userAnswers[q.id];
+                          return (
+                            <button
+                              key={q.id}
+                              type="button"
+                              onClick={() => {
+                                stopSpeaking();
+                                setTopicExampleIndex(idx);
+                                setShowHint(false);
+                              }}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold border transition-all ${
+                                idx === topicExampleIndex
+                                  ? 'bg-amber-400 text-slate-950 border-amber-500'
+                                  : answered
+                                  ? answered.isCorrect
+                                    ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                    : 'bg-rose-100 text-rose-800 border-rose-300'
+                                  : 'bg-slate-50 text-slate-600 border-slate-200'
+                              }`}
+                            >
+                              Contoh #{idx + 1}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-10 gap-1.5">
+                        {activePracticeQuestions.map((q, idx) => {
+                          const answered = userAnswers[q.id];
+                          return (
+                            <button
+                              key={q.id}
+                              type="button"
+                              onClick={() => {
+                                stopSpeaking();
+                                setCurrentQuestionIndex(idx);
+                                setShowHint(false);
+                              }}
+                              className={`h-7 rounded-lg text-[11px] font-extrabold border transition-all ${
+                                idx === currentQuestionIndex
+                                  ? 'bg-[#1E3A8A] text-white border-[#1E3A8A] ring-2 ring-[#1E3A8A]/20'
+                                  : answered
+                                  ? answered.isCorrect
+                                    ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                    : 'bg-rose-100 text-rose-800 border-rose-300'
+                                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                              }`}
+                            >
+                              {idx + 1}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
 
                     {/* Question Stem (One-Time Audio for Listening Section) */}
                     <div className="space-y-3">
-                      {currentQuestion.section === 'Listening' ? (
+                      {activeQuestion.section === 'Listening' ? (
                         <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-2.5">
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <span className="text-xs font-extrabold text-amber-300">
                               Aturan TOEFL Listening: Audio Hanya Diputar 1 Kali
                             </span>
-                            {playedAudioIds[currentQuestion.id] && (
+                            {playedAudioIds[activeQuestion.id] && (
                               <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-bold">
                                 Audio Sudah Diputar (1/1)
                               </span>
@@ -3612,39 +4266,39 @@ export default function App() {
                           </div>
                           <button
                             type="button"
-                            disabled={Boolean(playedAudioIds[currentQuestion.id])}
+                            disabled={Boolean(playedAudioIds[activeQuestion.id])}
                             onClick={() =>
                               handlePlayOneTimeAudio(
-                                currentQuestion.id,
-                                currentQuestion.audioScript || currentQuestion.prompt
+                                activeQuestion.id,
+                                activeQuestion.audioScript || activeQuestion.prompt
                               )
                             }
                             className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${
-                              playedAudioIds[currentQuestion.id]
+                              playedAudioIds[activeQuestion.id]
                                 ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
                                 : 'bg-blue-600 hover:bg-blue-500 text-white shadow-sm'
                             }`}
                           >
                             <Headphones className="w-4 h-4" />
                             <span>
-                              {playedAudioIds[currentQuestion.id]
+                              {playedAudioIds[activeQuestion.id]
                                 ? 'Audio Telah Diputar (1x Maksimal)'
                                 : 'Putar Audio Listening (1x Putar)'}
                             </span>
                           </button>
                           <p className="text-xs sm:text-sm font-bold text-slate-100 pt-1">
-                            {currentQuestion.prompt}
+                            {activeQuestion.prompt}
                           </p>
                         </div>
                       ) : (
                         <div className="flex items-start justify-between gap-2">
                           <p className="text-sm sm:text-base font-bold text-slate-900 leading-relaxed">
-                            {currentQuestion.prompt}
+                            {activeQuestion.prompt}
                           </p>
                           <button
                             type="button"
                             onClick={() =>
-                              speakText(currentQuestion.prompt, 'en-US', 0.92)
+                              speakText(activeQuestion.prompt, 'en-US', 0.92)
                             }
                             className="shrink-0 p-2 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-[#1E3A8A] border border-slate-200"
                             title="Dengar soal dalam bahasa Inggris"
@@ -3657,11 +4311,11 @@ export default function App() {
                       {showTranslations && (
                         <p className="text-xs sm:text-sm text-slate-600 bg-amber-50/70 border border-amber-200/80 px-3.5 py-2.5 rounded-xl">
                           <span className="font-bold text-amber-900">Terjemahan: </span>
-                          {currentQuestion.translationId}
+                          {activeQuestion.translationId}
                         </p>
                       )}
 
-                      {!userAnswers[currentQuestion.id] && (
+                      {!userAnswers[activeQuestion.id] && (
                         <div>
                           <button
                             type="button"
@@ -3677,7 +4331,7 @@ export default function App() {
                           </button>
                           {showHint && (
                             <div className="mt-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
-                              {currentQuestion.hintId}
+                              {activeQuestion.hintId}
                             </div>
                           )}
                         </div>
@@ -3686,11 +4340,11 @@ export default function App() {
 
                     {/* Options */}
                     <div className="space-y-2.5">
-                      {currentQuestion.options.map((opt) => {
-                        const userAns = userAnswers[currentQuestion.id];
+                      {activeQuestion.options.map((opt) => {
+                        const userAns = userAnswers[activeQuestion.id];
                         const isAnswered = Boolean(userAns);
                         const isSelected = userAns?.selectedKey === opt.key;
-                        const isCorrectOpt = opt.key === currentQuestion.correctKey;
+                        const isCorrectOpt = opt.key === activeQuestion.correctKey;
 
                         let cardClass =
                           'bg-white border-slate-200 hover:border-[#1E3A8A] hover:bg-blue-50/40 text-slate-800';
@@ -3743,11 +4397,11 @@ export default function App() {
                     </div>
 
                     {/* Explanation & Tantang Dosen Button */}
-                    {userAnswers[currentQuestion.id] && (
+                    {userAnswers[activeQuestion.id] && (
                       <div className="rounded-2xl border border-slate-200 bg-slate-900 text-slate-100 p-4 sm:p-5 space-y-3.5">
                         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
                           <div className="flex items-center gap-2">
-                            {userAnswers[currentQuestion.id].isCorrect ? (
+                            {userAnswers[activeQuestion.id].isCorrect ? (
                               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-extrabold border border-emerald-500/30">
                                 <CheckCircle2 className="w-4 h-4" />
                                 Jawaban Benar!
@@ -3755,18 +4409,18 @@ export default function App() {
                             ) : (
                               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 text-xs font-extrabold border border-rose-500/30">
                                 <XCircle className="w-4 h-4" />
-                                Kurang Tepat (Kunci: {currentQuestion.correctKey})
+                                Kurang Tepat (Kunci: {activeQuestion.correctKey})
                               </span>
                             )}
                           </div>
 
                           <div className="flex items-center gap-2">
-                            {!userAnswers[currentQuestion.id].isCorrect && (
+                            {!userAnswers[activeQuestion.id].isCorrect && (
                               <button
                                 type="button"
                                 onClick={() =>
                                   handleChallengeLecturer(
-                                    userAnswers[currentQuestion.id].selectedKey
+                                    userAnswers[activeQuestion.id].selectedKey
                                   )
                                 }
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-extrabold transition-colors"
@@ -3774,14 +4428,14 @@ export default function App() {
                                 <HelpCircle className="w-3.5 h-3.5" />
                                 <span>
                                   Tantang Dosen: Kenapa bukan{' '}
-                                  {userAnswers[currentQuestion.id].selectedKey}?
+                                  {userAnswers[activeQuestion.id].selectedKey}?
                                 </span>
                               </button>
                             )}
                             <button
                               type="button"
                               onClick={() =>
-                                speakText(currentQuestion.voiceWalkthrough)
+                                speakText(activeQuestion.voiceWalkthrough)
                               }
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold"
                             >
@@ -3797,7 +4451,7 @@ export default function App() {
                               Subject Utama
                             </div>
                             <div className="text-emerald-300 font-semibold mt-0.5">
-                              {currentQuestion.breakdown.subject}
+                              {activeQuestion.breakdown.subject}
                             </div>
                           </div>
                           <div className="p-2.5 rounded-xl bg-slate-800/90 border border-slate-700">
@@ -3805,7 +4459,7 @@ export default function App() {
                               Verb Utama
                             </div>
                             <div className="text-sky-300 font-semibold mt-0.5">
-                              {currentQuestion.breakdown.verb}
+                              {activeQuestion.breakdown.verb}
                             </div>
                           </div>
                           <div className="p-2.5 rounded-xl bg-slate-800/90 border border-slate-700">
@@ -3813,14 +4467,14 @@ export default function App() {
                               Jebakan Soal
                             </div>
                             <div className="text-amber-300 font-semibold mt-0.5">
-                              {currentQuestion.breakdown.trap}
+                              {activeQuestion.breakdown.trap}
                             </div>
                           </div>
                         </div>
 
                         <div className="space-y-1.5 text-xs">
-                          {currentQuestion.options.map((opt) => {
-                            const isKey = opt.key === currentQuestion.correctKey;
+                          {activeQuestion.options.map((opt) => {
+                            const isKey = opt.key === activeQuestion.correctKey;
                             return (
                               <div
                                 key={opt.key}
@@ -3831,7 +4485,7 @@ export default function App() {
                                 }`}
                               >
                                 <span className="font-extrabold mr-1.5">{opt.key}.</span>
-                                {currentQuestion.optionAnalysis[opt.key]}
+                                {activeQuestion.optionAnalysis[opt.key]}
                               </div>
                             );
                           })}
@@ -3840,45 +4494,91 @@ export default function App() {
                     )}
 
                     {/* Prev / Next Navigation */}
-                    <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                      <button
-                        type="button"
-                        disabled={currentQuestionIndex === 0}
-                        onClick={() => {
-                          stopSpeaking();
-                          setCurrentQuestionIndex((i) => Math.max(0, i - 1));
-                          setShowHint(false);
-                        }}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-40"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                        <span>Sebelumnya</span>
-                      </button>
-
-                      {currentQuestionIndex < activePracticeQuestions.length - 1 ? (
+                    {activeTab === 'contoh' ? (
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                         <button
                           type="button"
+                          disabled={topicExampleIndex === 0}
                           onClick={() => {
                             stopSpeaking();
-                            setCurrentQuestionIndex((i) => i + 1);
+                            setTopicExampleIndex((i) => Math.max(0, i - 1));
                             setShowHint(false);
                           }}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#1E3A8A] text-white hover:bg-blue-900"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-40"
                         >
-                          <span>Soal Berikutnya</span>
-                          <ChevronRight className="w-4 h-4" />
+                          <ChevronLeft className="w-4 h-4" />
+                          <span>Contoh Sebelumnya</span>
                         </button>
-                      ) : (
+
+                        {topicExampleIndex < currentTopic.questions.length - 1 ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              stopSpeaking();
+                              setTopicExampleIndex((i) => i + 1);
+                              setShowHint(false);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-amber-400 text-slate-950 hover:bg-amber-300"
+                          >
+                            <span>Contoh Berikutnya</span>
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              stopSpeaking();
+                              setActiveTab('latihan');
+                              setCurrentQuestionIndex(0);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#1E3A8A] text-white hover:bg-blue-900"
+                          >
+                            <span>Lanjut Bank 20 Soal Acak</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                         <button
                           type="button"
-                          onClick={handleReshufflePractice}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700"
+                          disabled={currentQuestionIndex === 0}
+                          onClick={() => {
+                            stopSpeaking();
+                            setCurrentQuestionIndex((i) => Math.max(0, i - 1));
+                            setShowHint(false);
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-40"
                         >
-                          <RefreshCw className="w-4 h-4" />
-                          <span>Acak 20 Soal Baru</span>
+                          <ChevronLeft className="w-4 h-4" />
+                          <span>Sebelumnya</span>
                         </button>
-                      )}
-                    </div>
+
+                        {currentQuestionIndex < activePracticeQuestions.length - 1 ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              stopSpeaking();
+                              setCurrentQuestionIndex((i) => i + 1);
+                              setShowHint(false);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#1E3A8A] text-white hover:bg-blue-900"
+                          >
+                            <span>Soal Berikutnya</span>
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={handleReshufflePractice}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700"
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                            <span>Acak 20 Soal Baru</span>
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </>
@@ -3950,9 +4650,9 @@ export default function App() {
                   {!trapGameActive ? (
                     <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-3">
                       <p className="text-xs sm:text-sm text-slate-600 max-w-lg mx-auto">
-                        Uji refleksmu dalam 60 detik! Identifikasi mana <strong>True Subject</strong>{' '}
-                        dan mana <strong>Trap</strong> (Preposisi, Appositive, Reduced Clause,
-                        Inversion) sebelum waktu habis.
+                        Uji refleksmu dalam 60 detik! Identifikasi aturan <strong>True Subject</strong>,{' '}
+                        <strong>Irregular Plural</strong>, <strong>Gerund</strong>, dan{' '}
+                        <strong>Inversion</strong> sebelum waktu habis.
                       </p>
                       {trapScore > 0 && (
                         <div className="text-sm font-extrabold text-emerald-700">
@@ -4126,9 +4826,9 @@ export default function App() {
                       Siap Menguji Kecepatanmu?
                     </h3>
                     <p className="text-xs sm:text-sm text-slate-600 max-w-lg mx-auto leading-relaxed">
-                      Di ujian TOEFL ITP asli, kamu hanya punya rata-rata{' '}
-                      <strong>37 detik per soal</strong>. Kerjakan 8 soal campuran ini dalam 6
-                      menit untuk mendapatkan <strong>Rapor Analisis Kelemahan per Topik</strong>.
+                      Uji campuran seluruh topik (Gerund, Passive Voice, Uncountable Nouns, Articles,
+                      Irregular Plurals, dan Inversion) dalam 6 menit untuk melihat{' '}
+                      <strong>Rapor Analisis Kelemahan per Topik</strong>.
                     </p>
                     <button
                       type="button"
@@ -4297,7 +4997,7 @@ export default function App() {
                       Section 1 • Listening Part A
                     </span>
                     <h2 className="text-base sm:text-xl font-extrabold text-slate-900 mt-1">
-                      Lab Listening Short Dialogues (Audio Penutur Inggris)
+                      Lab Listening Short Dialogues (1x Putar Audio)
                     </h2>
                   </div>
 
@@ -4604,7 +5304,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Voice Settings (Auto-Language Detection + Speed) */}
               {showVoiceSettings && (
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs">
                   <div className="flex items-center justify-between">
@@ -4641,7 +5340,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* Avatar & Identity */}
               <div className="flex flex-col items-center text-center pt-1">
                 <LecturerAvatar
                   state={avatarState}
@@ -4658,7 +5356,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Live Subtitle Box */}
               <div className="p-3.5 rounded-xl bg-slate-900 text-slate-100 border border-slate-800 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
@@ -4678,7 +5375,6 @@ export default function App() {
                 <p className="text-xs leading-relaxed text-slate-200">{liveSubtitle}</p>
               </div>
 
-              {/* Action Buttons */}
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
@@ -4772,7 +5468,7 @@ export default function App() {
                   type="text"
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Tanya dalam ID atau English..."
+                  placeholder="Tanya Gerund, Passive, Articles..."
                   className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs text-slate-800 focus:outline-none focus:border-[#1E3A8A]"
                 />
 
