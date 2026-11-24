@@ -2580,40 +2580,6 @@ export default function App() {
     };
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
 
-    try {
-      const svgIcon = encodeURIComponent(
-        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="40" fill="#1E3A8A"/><text x="96" y="114" font-family="sans-serif" font-size="68" font-weight="900" fill="#FBBF24" text-anchor="middle">550</text></svg>`
-      );
-      const manifestObj = {
-        name: 'TOEFL 550 Academy — AI Lecturer',
-        short_name: 'TOEFL 550',
-        start_url: '.',
-        display: 'standalone',
-        background_color: '#F8FAFC',
-        theme_color: '#1E3A8A',
-        icons: [
-          {
-            src: `data:image/svg+xml;utf8,${svgIcon}`,
-            sizes: '192x192',
-            type: 'image/svg+xml'
-          }
-        ]
-      };
-      const manifestBlob = new Blob([JSON.stringify(manifestObj)], {
-        type: 'application/manifest+json'
-      });
-      const manifestUrl = URL.createObjectURL(manifestBlob);
-      let linkEl = document.querySelector('link[rel="manifest"]');
-      if (!linkEl) {
-        linkEl = document.createElement('link');
-        linkEl.rel = 'manifest';
-        document.head.appendChild(linkEl);
-      }
-      linkEl.href = manifestUrl;
-    } catch {
-      // Ignore restricted environments
-    }
-
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
     };
