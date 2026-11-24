@@ -1,0 +1,25 @@
+{
+"name": "TOEFL 550 Academy — AI Lecturer",
+"short_name": "TOEFL 550",
+"description": "Aplikasi Persiapan TOEFL ITP Target Skor 550+ dengan AI Dosen Bilingual",
+"start_url": "/",
+"scope": "/",
+"display": "standalone",
+"orientation": "any",
+"background_color": "#F8FAFC",
+"theme_color": "#1E3A8A",
+"icons": [
+{
+"src": "data:image/svg+xml;utf8,550",
+"sizes": "192x192",
+"type": "image/svg+xml",
+"purpose": "any maskable"
+},
+{
+"src": "data:image/svg+xml;utf8,550",
+"sizes": "512x512",
+"type": "image/svg+xml",
+"purpose": "any maskable"
+}
+]
+}
