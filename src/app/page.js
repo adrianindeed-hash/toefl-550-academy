@@ -60,7 +60,11 @@ import {
   LISTENING_LAB_ITEMS,
   GRAMMAR_FLASHCARDS,
   AWL_VOCAB,
-  buildFullQuestionBank
+  READING_PASSAGES_BANK,
+  buildFullQuestionBank,
+  getTopicPracticeQuestions,
+  buildRealToeflItpExam,
+  convertToeflItpScore
 } from "./toeflData";
 
 // ============================================================================
@@ -626,10 +630,9 @@ export default function App() {
   const [selectedLevel, setSelectedLevel] = useState("Basic");
   const [selectedSection, setSelectedSection] = useState("All");
   const [selectedTopicId, setSelectedTopicId] = useState("basic-struct-sv");
-  const [activeTab, setActiveTab] = useState("materi"); // materi | contoh | latihan
+  const [activeTab, setActiveTab] = useState("materi"); // materi | contoh
+  const [topicPracticeLimit, setTopicPracticeLimit] = useState(5); // 5 or 10 soal per topik
   const [topicExampleIndex, setTopicExampleIndex] = useState(0);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [practiceSeed, setPracticeSeed] = useState(1);
   const [highlightedLine, setHighlightedLine] = useState(null);
   const [playedAudioIds, setPlayedAudioIds] = useState({});
 
@@ -695,11 +698,15 @@ export default function App() {
   const [vocabCurrentScore, setVocabCurrentScore] = useState(0);
   const [vocabFeedback, setVocabFeedback] = useState(null);
 
-  // Timed Mini-Test
-  const [examStarted, setExamStarted] = useState(false);
-  const [examSubmitted, setExamSubmitted] = useState(false);
-  const [examSecondsLeft, setExamSecondsLeft] = useState(360);
-  const [examAnswers, setExamAnswers] = useState({});
+  // Real TOEFL ITP Level 1 Simulation State (Full 140 Soal / 115 Menit or Mini 35 Soal / 30 Menit)
+  const [itpMode, setItpMode] = useState("full"); // 'full' | 'mini'
+  const [itpExam, setItpExam] = useState(null);
+  const [itpSectionIdx, setItpSectionIdx] = useState(0); // 0: Listening, 1: Structure, 2: Reading
+  const [itpShowDirections, setItpShowDirections] = useState(true);
+  const [itpQIndex, setItpQIndex] = useState(0);
+  const [itpSecondsLeft, setItpSecondsLeft] = useState(35 * 60);
+  const [itpAnswers, setItpAnswers] = useState({});
+  const [itpFinished, setItpFinished] = useState(false);
 
   // Lab Listening (with Speed Control + Practice vs Exam Mode)
   const [listenIndex, setListenIndex] = useState(0);
@@ -804,26 +811,13 @@ export default function App() {
     });
   }, [selectedLevel, selectedSection]);
 
-  const activePracticeQuestions = useMemo(() => {
-    const sectionPool = fullQuestionBank.filter((q) => q.section === currentTopic.section);
-    const pool = sectionPool.length > 0 ? sectionPool : fullQuestionBank;
-    const levelFirst = pool.filter((q) => q.level === currentTopic.level);
-    const others = pool.filter((q) => q.level !== currentTopic.level);
+  // 5 or 10 Focused Questions per Module Topic (Reading stays locked to its full passage!)
+  const activeTopicQuestions = useMemo(() => {
+    return getTopicPracticeQuestions(currentTopic, fullQuestionBank, topicPracticeLimit);
+  }, [currentTopic, fullQuestionBank, topicPracticeLimit]);
 
-    const shuffleWithSeed = (items, seedOffset) => {
-      const arr = [...items];
-      let seed = (practiceSeed + seedOffset) * 9301 + 49297;
-      for (let i = arr.length - 1; i > 0; i--) {
-        seed = (seed * 16807) % 2147483647;
-        const j = seed % (i + 1);
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-      return arr;
-    };
-
-    const picked = [...shuffleWithSeed(levelFirst, 1), ...shuffleWithSeed(others, 2)].slice(0, 20);
-    return shuffleWithSeed(picked, 3);
-  }, [fullQuestionBank, currentTopic.section, currentTopic.level, practiceSeed]);
+  const activePassageForSplitScreen =
+    activeTab === "contoh" && currentTopic.passage?.lines ? currentTopic.passage : null;
 
   const allQuestionsMap = useMemo(() => {
     const map = {};
@@ -846,9 +840,7 @@ export default function App() {
   }, [fullQuestionBank]);
 
   const activeQuestion =
-    activeTab === "contoh"
-      ? currentTopic.questions[topicExampleIndex] || currentTopic.questions[0]
-      : activePracticeQuestions[currentQuestionIndex] || activePracticeQuestions[0];
+    activeTopicQuestions[topicExampleIndex] || activeTopicQuestions[0];
 
   const totalQuestionsCount = fullQuestionBank.length;
   const correctAnswersCount = useMemo(
@@ -928,15 +920,24 @@ export default function App() {
     return () => clearInterval(id);
   }, [trapGameActive, trapTimeLeft, trapScore]);
 
+  // Real TOEFL ITP Per-Section Timer (Auto-advances section when time runs out)
   useEffect(() => {
-    if (!examStarted || examSubmitted) return;
-    if (examSecondsLeft <= 0) {
-      setExamSubmitted(true);
+    if (!itpExam || itpFinished || itpShowDirections) return;
+    if (itpSecondsLeft <= 0) {
+      if (itpSectionIdx < itpExam.sections.length - 1) {
+        const nextIdx = itpSectionIdx + 1;
+        setItpSectionIdx(nextIdx);
+        setItpQIndex(0);
+        setItpShowDirections(true);
+        setItpSecondsLeft(itpExam.sections[nextIdx].durationSeconds);
+      } else {
+        setItpFinished(true);
+      }
       return;
     }
-    const id = setInterval(() => setExamSecondsLeft((s) => s - 1), 1000);
+    const id = setInterval(() => setItpSecondsLeft((s) => s - 1), 1000);
     return () => clearInterval(id);
-  }, [examStarted, examSubmitted, examSecondsLeft]);
+  }, [itpExam, itpFinished, itpShowDirections, itpSecondsLeft, itpSectionIdx]);
 
   // ==========================================================================
   // VOICE ENGINE
@@ -1017,7 +1018,6 @@ export default function App() {
       setSelectedTopicId(firstTopic.id);
       setActiveTab("materi");
       setTopicExampleIndex(0);
-      setCurrentQuestionIndex(0);
       setHighlightedLine(null);
       setShowHint(false);
     }
@@ -1034,7 +1034,6 @@ export default function App() {
       setSelectedTopicId(matching.id);
       setActiveTab("materi");
       setTopicExampleIndex(0);
-      setCurrentQuestionIndex(0);
       setHighlightedLine(null);
       setShowHint(false);
     }
@@ -1050,26 +1049,49 @@ export default function App() {
       setSelectedTopicId(found.id);
       setActiveTab(targetTab);
       setTopicExampleIndex(0);
-      setCurrentQuestionIndex(0);
       setHighlightedLine(null);
       setShowHint(false);
     }
     setMobileMenuOpen(false);
   };
 
-  // Fixed Reshuffle: clears previous answers for the active batch so user can retry fresh!
-  const handleReshufflePractice = () => {
+  const handleStartItpExam = (chosenMode) => {
     stopSpeaking();
-    setUserAnswers((prev) => {
-      const next = { ...prev };
-      for (const q of activePracticeQuestions) {
-        delete next[q.id];
+    const built = buildRealToeflItpExam(fullQuestionBank, chosenMode);
+    setItpMode(chosenMode);
+    setItpExam(built);
+    setItpSectionIdx(0);
+    setItpQIndex(0);
+    setItpShowDirections(true);
+    setItpAnswers({});
+    setItpFinished(false);
+    setItpSecondsLeft(built.sections[0].durationSeconds);
+  };
+
+  const handleAdvanceItpSection = () => {
+    stopSpeaking();
+    if (!itpExam) return;
+    if (itpSectionIdx < itpExam.sections.length - 1) {
+      const nextIdx = itpSectionIdx + 1;
+      setItpSectionIdx(nextIdx);
+      setItpQIndex(0);
+      setItpShowDirections(true);
+      setItpSecondsLeft(itpExam.sections[nextIdx].durationSeconds);
+    } else {
+      // Save wrong answers to Error Log automatically
+      const wrongIds = [];
+      for (const sec of itpExam.sections) {
+        for (const q of sec.questions) {
+          if (itpAnswers[q.id] && itpAnswers[q.id] !== q.correctKey) {
+            wrongIds.push(q.id);
+          }
+        }
       }
-      return next;
-    });
-    setPracticeSeed((s) => s + 1);
-    setCurrentQuestionIndex(0);
-    setShowHint(false);
+      if (wrongIds.length > 0) {
+        setBookmarkedIds((prev) => Array.from(new Set([...prev, ...wrongIds])));
+      }
+      setItpFinished(true);
+    }
   };
 
   const handlePlayAudio = (audioKey, scriptText, oneTimeOnly = true, rate = 0.94) => {
@@ -1256,25 +1278,25 @@ export default function App() {
     if (ok) {
       setListeningScore((s) => s + 1);
       speakText(`Benar sekali! ${item.explanation}`);
-    } else {
-      speakText(`Kurang tepat. ${item.explanation}`);
-    }
-  };
-
-  const examReport = useMemo(() => {
-    if (!examSubmitted) return null;
-    let correct = 0;
-    const skillStats = {};
-    for (const q of MINI_TEST_QUESTIONS) {
-      const ok = examAnswers[q.id] === q.correctKey;
-      if (ok) correct += 1;
-      if (!skillStats[q.skill]) skillStats[q.skill] = { total: 0, correct: 0 };
-      skillStats[q.skill].total += 1;
-      if (ok) skillStats[q.skill].correct += 1;
-    }
-    const projectedStructureScore = Math.round(38 + (correct / MINI_TEST_QUESTIONS.length) * 26);
-    return { correct, total: MINI_TEST_QUESTIONS.length, skillStats, projectedStructureScore };
-  }, [examSubmitted, examAnswers]);
+  const itpScoreReport = useMemo(() => {
+    if (!itpExam || !itpFinished) return null;
+    const s1 = itpExam.sections[0].questions;
+    const s2 = itpExam.sections[1].questions;
+    const s3 = itpExam.sections[2].questions;
+    const r1 = s1.filter((q) => itpAnswers[q.id] === q.correctKey).length;
+    const r2 = s2.filter((q) => itpAnswers[q.id] === q.correctKey).length;
+    const r3 = s3.filter((q) => itpAnswers[q.id] === q.correctKey).length;
+    const converted = convertToeflItpScore(r1, s1.length, r2, s2.length, r3, s3.length);
+    return {
+      rawS1: r1,
+      totalS1: s1.length,
+      rawS2: r2,
+      totalS2: s2.length,
+      rawS3: r3,
+      totalS3: s3.length,
+      ...converted
+    };
+  }, [itpExam, itpFinished, itpAnswers]);
 
   const badges = [
     { id: "b-rookie", title: "Grammar Rookie", desc: "Menjawab benar >= 3 soal", unlocked: correctAnswersCount >= 3 },
@@ -1336,7 +1358,7 @@ export default function App() {
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 hidden sm:block truncate">
-                Silabus Lengkap {totalModulesCount} Modul • Coret &amp; Sorot • Diagnostic • 300+ Bank Soal
+                Silabus Lengkap {totalModulesCount} Modul • Real TOEFL ITP (140 Soal) • {totalQuestionsCount}+ Bank Soal
               </p>
             </div>
           </div>
@@ -1388,9 +1410,9 @@ export default function App() {
               {[
                 { id: "curriculum", label: `Silabus ${totalModulesCount} Modul`, icon: BookOpen },
                 { id: "diagnostic", label: "Diagnostic Test", icon: Target },
-                { id: "arena", label: "Arena Game", icon: Gamepad2 },
-                { id: "exam", label: "Simulasi Timer", icon: Timer },
+                { id: "exam", label: "Simulasi TOEFL ITP (Real)", icon: Timer },
                 { id: "listening", label: "Lab Listening", icon: Headphones },
+                { id: "arena", label: "Arena Game", icon: Gamepad2 },
                 { id: "vault", label: "Error Log, Rumus & AWL", icon: Bookmark }
               ].map((nav) => {
                 const IconComp = nav.icon;
@@ -1621,7 +1643,7 @@ export default function App() {
                     Topik {currentTopic.code}: {currentTopic.title}
                   </h2>
 
-                  <div className="mt-4 grid grid-cols-3 gap-1.5 sm:gap-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
+                  <div className="mt-4 grid grid-cols-2 gap-1.5 sm:gap-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
                     <button
                       type="button"
                       onClick={() => {
@@ -1633,7 +1655,7 @@ export default function App() {
                       }`}
                     >
                       <BookOpen className="w-3.5 h-3.5 shrink-0" />
-                      <span>1. Materi &amp; Rumus</span>
+                      <span>1. Materi, Rumus &amp; Jebakan</span>
                     </button>
 
                     <button
@@ -1650,23 +1672,7 @@ export default function App() {
                       }`}
                     >
                       <ListChecks className="w-3.5 h-3.5 shrink-0" />
-                      <span>2. Contoh Soal ({currentTopic.questions.length})</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        stopSpeaking();
-                        setActiveTab("latihan");
-                        setCurrentQuestionIndex(0);
-                        setShowHint(false);
-                      }}
-                      className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-[11px] sm:text-xs font-extrabold transition-all ${
-                        activeTab === "latihan" ? "bg-white text-[#1E3A8A] shadow-xs" : "text-slate-600 hover:text-slate-900"
-                      }`}
-                    >
-                      <Target className="w-3.5 h-3.5 shrink-0" />
-                      <span>3. Bank 20 Soal Acak</span>
+                      <span>2. Latihan Soal Topik ({activeTopicQuestions.length} Soal)</span>
                     </button>
                   </div>
                 </div>
@@ -1810,140 +1816,141 @@ export default function App() {
                         className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs sm:text-sm font-extrabold shadow-sm"
                       >
                         <ListChecks className="w-4 h-4" />
-                        <span>Latih Contoh Soal Topik Ini ({currentTopic.questions.length} Soal)</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          stopSpeaking();
-                          setActiveTab("latihan");
-                          setCurrentQuestionIndex(0);
-                        }}
-                        className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#1E3A8A] hover:bg-blue-900 text-white text-xs sm:text-sm font-bold shadow-sm"
-                      >
-                        <span>Bank 20 Soal Acak ({currentTopic.section})</span>
+                        <span>Latih Soal Topik Ini ({activeTopicQuestions.length} Soal)</span>
                         <ArrowRight className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
                 )}
 
-                {/* TAB 2 & TAB 3: CONTOH SOAL (WITH SPLIT-SCREEN READING) OR BANK 20 SOAL ACAK */}
-                {(activeTab === "contoh" || activeTab === "latihan") && activeQuestion && (
-                  <div
-                    className={
-                      activeTab === "contoh" && currentTopic.passage?.lines
-                        ? "grid grid-cols-1 xl:grid-cols-12 gap-4 items-start"
-                        : "space-y-4"
-                    }
-                  >
-                    {/* SPLIT-SCREEN READING PASSAGE PANEL */}
-                    {activeTab === "contoh" && currentTopic.passage?.lines && (
-                      <div className="xl:col-span-5 bg-white rounded-2xl border border-slate-200 p-4 shadow-xs xl:sticky xl:top-32 space-y-3">
-                        <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
-                          <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700">
-                            Split-Screen Reading
-                          </span>
-                          {highlightedLine !== null && (
-                            <button
-                              type="button"
-                              onClick={() => setHighlightedLine(null)}
-                              className="text-[11px] text-slate-500 hover:text-slate-800 underline"
-                            >
-                              Hapus Sorotan
-                            </button>
+                {/* TAB 2: LATIHAN SOAL TOPIK (5 / 10 SOAL FOKUS + SPLIT-SCREEN READING) */}
+                {activeTab === "contoh" && activeQuestion && (
+                  <div className="space-y-4">
+                    <div
+                      className={
+                        activePassageForSplitScreen
+                          ? "grid grid-cols-1 xl:grid-cols-12 gap-4 items-start"
+                          : "space-y-4"
+                      }
+                    >
+                      {/* SPLIT-SCREEN READING PASSAGE PANEL */}
+                      {activePassageForSplitScreen && (
+                        <div className="xl:col-span-5 bg-white rounded-2xl border border-slate-200 p-4 shadow-xs xl:sticky xl:top-32 space-y-3">
+                          <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                            <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700">
+                              Split-Screen Reading
+                            </span>
+                            {highlightedLine !== null && (
+                              <button
+                                type="button"
+                                onClick={() => setHighlightedLine(null)}
+                                className="text-[11px] text-slate-500 hover:text-slate-800 underline"
+                              >
+                                Hapus Sorotan
+                              </button>
+                            )}
+                          </div>
+                          <h4 className="font-extrabold text-sm text-slate-900">
+                            {activePassageForSplitScreen.title}
+                          </h4>
+                          <div className="space-y-2 text-xs sm:text-sm leading-relaxed text-slate-800 font-serif">
+                            {activePassageForSplitScreen.lines.map((line, lIdx) => (
+                              <div
+                                key={lIdx}
+                                className={`flex gap-2.5 p-2 rounded-lg transition-all ${
+                                  highlightedLine === lIdx
+                                    ? "bg-amber-200/80 ring-2 ring-amber-400 font-semibold text-slate-950"
+                                    : "bg-slate-50/70"
+                                }`}
+                              >
+                                <span className="font-mono text-[10px] font-bold text-slate-400 select-none pt-0.5">
+                                  {String(lIdx + 1).padStart(2, "0")}
+                                </span>
+                                <p>{line}</p>
+                              </div>
+                            ))}
+                          </div>
+                          {showTranslations && activePassageForSplitScreen.translationId && (
+                            <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200 text-xs text-slate-700">
+                              <strong className="text-amber-900 block mb-0.5">Ringkasan ID:</strong>
+                              {activePassageForSplitScreen.translationId}
+                            </div>
                           )}
                         </div>
-                        <h4 className="font-extrabold text-sm text-slate-900">{currentTopic.passage.title}</h4>
-                        <div className="space-y-2 text-xs sm:text-sm leading-relaxed text-slate-800 font-serif">
-                          {currentTopic.passage.lines.map((line, lIdx) => (
-                            <div
-                              key={lIdx}
-                              className={`flex gap-2.5 p-2 rounded-lg transition-all ${
-                                highlightedLine === lIdx
-                                  ? "bg-amber-200/80 ring-2 ring-amber-400 font-semibold text-slate-950"
-                                  : "bg-slate-50/70"
+                      )}
+
+                      {/* QUESTION CARD */}
+                      <div
+                        className={`${
+                          activePassageForSplitScreen ? "xl:col-span-7" : ""
+                        } bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs space-y-5`}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="px-2.5 py-1 rounded-lg text-xs font-extrabold bg-amber-100 text-amber-950 border border-amber-300">
+                              Latihan {currentTopic.code}: {topicExampleIndex + 1}/{activeTopicQuestions.length}
+                            </span>
+                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700">
+                              {activeQuestion.skillTag}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            {currentTopic.section !== "Reading" && (
+                              <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                                {[5, 10].map((cnt) => (
+                                  <button
+                                    key={cnt}
+                                    type="button"
+                                    onClick={() => {
+                                      setTopicPracticeLimit(cnt);
+                                      setTopicExampleIndex(0);
+                                    }}
+                                    className={`px-2 py-1 rounded-md text-[11px] font-extrabold ${
+                                      topicPracticeLimit === cnt
+                                        ? "bg-[#1E3A8A] text-white"
+                                        : "text-slate-600"
+                                    }`}
+                                  >
+                                    {cnt} Soal
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+
+                            {activeQuestion.evidenceLine !== undefined && activePassageForSplitScreen && (
+                              <button
+                                type="button"
+                                onClick={() => setHighlightedLine(activeQuestion.evidenceLine)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100"
+                              >
+                                <Lightbulb className="w-3.5 h-3.5" />
+                                <span>Sorot Bukti</span>
+                              </button>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => toggleBookmark(activeQuestion.id)}
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${
+                                bookmarkedIds.includes(activeQuestion.id)
+                                  ? "bg-amber-100 text-amber-900 border-amber-300"
+                                  : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
                               }`}
                             >
-                              <span className="font-mono text-[10px] font-bold text-slate-400 select-none pt-0.5">
-                                {String(lIdx + 1).padStart(2, "0")}
-                              </span>
-                              <p>{line}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* QUESTION CARD */}
-                    <div
-                      className={`${
-                        activeTab === "contoh" && currentTopic.passage?.lines ? "xl:col-span-7" : ""
-                      } bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs space-y-5`}
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
-                        <div className="flex flex-wrap items-center gap-2">
-                          {activeTab === "contoh" ? (
-                            <span className="px-2.5 py-1 rounded-lg text-xs font-extrabold bg-amber-100 text-amber-950 border border-amber-300">
-                              Contoh {currentTopic.code}: {topicExampleIndex + 1}/{currentTopic.questions.length}
-                            </span>
-                          ) : (
-                            <span className="px-2.5 py-1 rounded-lg text-xs font-extrabold bg-blue-50 text-[#1E3A8A] border border-blue-200">
-                              Bank Acak: {currentQuestionIndex + 1}/{activePracticeQuestions.length}
-                            </span>
-                          )}
-                          <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700">
-                            {activeQuestion.skillTag}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-1.5">
-                          {activeQuestion.evidenceLine !== undefined && currentTopic.passage?.lines && (
-                            <button
-                              type="button"
-                              onClick={() => setHighlightedLine(activeQuestion.evidenceLine)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100"
-                            >
-                              <Lightbulb className="w-3.5 h-3.5" />
-                              <span>Sorot Bukti</span>
+                              {bookmarkedIds.includes(activeQuestion.id) ? (
+                                <BookmarkCheck className="w-3.5 h-3.5 text-amber-700" />
+                              ) : (
+                                <Bookmark className="w-3.5 h-3.5" />
+                              )}
+                              <span>{bookmarkedIds.includes(activeQuestion.id) ? "Tersimpan" : "Simpan"}</span>
                             </button>
-                          )}
-
-                          {activeTab === "latihan" && (
-                            <button
-                              type="button"
-                              onClick={handleReshufflePractice}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-extrabold bg-[#1E3A8A] text-white hover:bg-blue-900"
-                            >
-                              <RefreshCw className="w-3.5 h-3.5" />
-                              <span>Acak Baru</span>
-                            </button>
-                          )}
-
-                          <button
-                            type="button"
-                            onClick={() => toggleBookmark(activeQuestion.id)}
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${
-                              bookmarkedIds.includes(activeQuestion.id)
-                                ? "bg-amber-100 text-amber-900 border-amber-300"
-                                : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                            }`}
-                          >
-                            {bookmarkedIds.includes(activeQuestion.id) ? (
-                              <BookmarkCheck className="w-3.5 h-3.5 text-amber-700" />
-                            ) : (
-                              <Bookmark className="w-3.5 h-3.5" />
-                            )}
-                            <span>{bookmarkedIds.includes(activeQuestion.id) ? "Tersimpan" : "Simpan"}</span>
-                          </button>
+                          </div>
                         </div>
-                      </div>
 
-                      {/* QUESTION SELECTOR STRIP */}
-                      {activeTab === "contoh" ? (
-                        <div className="flex flex-wrap items-center gap-2">
-                          {currentTopic.questions.map((q, idx) => {
+                        {/* QUESTION SELECTOR STRIP */}
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {activeTopicQuestions.map((q, idx) => {
                             const answered = userAnswers[q.id];
                             return (
                               <button
@@ -1955,7 +1962,7 @@ export default function App() {
                                   setHighlightedLine(null);
                                   setShowHint(false);
                                 }}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-extrabold border ${
+                                className={`px-2.5 py-1 rounded-lg text-xs font-extrabold border ${
                                   idx === topicExampleIndex
                                     ? "bg-amber-400 text-slate-950 border-amber-500"
                                     : answered
@@ -1965,237 +1972,216 @@ export default function App() {
                                     : "bg-slate-50 text-slate-600 border-slate-200"
                                 }`}
                               >
-                                Contoh #{idx + 1}
+                                #{idx + 1}
                               </button>
                             );
                           })}
                         </div>
-                      ) : (
-                        <div className="grid grid-cols-10 gap-1.5">
-                          {activePracticeQuestions.map((q, idx) => {
-                            const answered = userAnswers[q.id];
-                            return (
-                              <button
-                                key={q.id}
-                                type="button"
-                                onClick={() => {
-                                  stopSpeaking();
-                                  setCurrentQuestionIndex(idx);
-                                  setShowHint(false);
-                                }}
-                                className={`h-7 rounded-lg text-[11px] font-extrabold border ${
-                                  idx === currentQuestionIndex
-                                    ? "bg-[#1E3A8A] text-white border-[#1E3A8A]"
-                                    : answered
-                                    ? answered.isCorrect
-                                      ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                                      : "bg-rose-100 text-rose-800 border-rose-300"
-                                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                                }`}
-                              >
-                                {idx + 1}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
 
-                      {/* QUESTION STEM */}
-                      <div className="space-y-3">
-                        {activeQuestion.section === "Listening" ? (
-                          <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-2.5">
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                              <span className="text-xs font-extrabold text-amber-300">Audio Listening TOEFL</span>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handlePlayAudio(
-                                    activeQuestion.id,
-                                    activeQuestion.audioScript || activeQuestion.prompt,
-                                    false,
-                                    0.93
-                                  )
-                                }
-                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold"
-                              >
-                                <Headphones className="w-4 h-4" />
-                                <span>Putar Audio Soal</span>
-                              </button>
-                            </div>
-                            <p className="text-xs sm:text-sm font-bold text-slate-100">{activeQuestion.prompt}</p>
-                          </div>
-                        ) : (
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="text-sm sm:text-base font-bold text-slate-900 leading-relaxed">{activeQuestion.prompt}</p>
-                            <button
-                              type="button"
-                              onClick={() => speakText(activeQuestion.prompt, "en-US", 0.92)}
-                              className="shrink-0 p-2 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-[#1E3A8A] border border-slate-200"
-                            >
-                              <Volume2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
-
-                        {showTranslations && activeQuestion.translationId && (
-                          <p className="text-xs sm:text-sm text-slate-600 bg-amber-50/70 border border-amber-200/80 px-3.5 py-2.5 rounded-xl">
-                            <span className="font-bold text-amber-900">Terjemahan: </span>
-                            {activeQuestion.translationId}
-                          </p>
-                        )}
-
-                        {!userAnswers[activeQuestion.id] && activeQuestion.hintId && (
-                          <div>
-                            <button
-                              type="button"
-                              onClick={() => setShowHint((prev) => !prev)}
-                              className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 hover:text-amber-800"
-                            >
-                              <Lightbulb className="w-3.5 h-3.5" />
-                              <span>{showHint ? "Sembunyikan Petunjuk" : "Butuh Petunjuk Dosen?"}</span>
-                            </button>
-                            {showHint && (
-                              <div className="mt-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
-                                {activeQuestion.hintId}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* OPTIONS */}
-                      <div className="space-y-2.5">
-                        {activeQuestion.options.map((opt) => {
-                          const userAns = userAnswers[activeQuestion.id];
-                          const isAnswered = Boolean(userAns);
-                          const isSelected = userAns?.selectedKey === opt.key;
-                          const isCorrectOpt = opt.key === activeQuestion.correctKey;
-
-                          let cardClass = "bg-white border-slate-200 hover:border-[#1E3A8A] hover:bg-blue-50/40 text-slate-800";
-                          if (isAnswered) {
-                            if (isCorrectOpt) cardClass = "bg-emerald-50 border-emerald-500 text-emerald-950 ring-2 ring-emerald-500/20";
-                            else if (isSelected) cardClass = "bg-rose-50 border-rose-400 text-rose-950";
-                            else cardClass = "bg-slate-50 border-slate-200 text-slate-400 opacity-75";
-                          }
-
-                          return (
-                            <button
-                              key={opt.key}
-                              type="button"
-                              disabled={isAnswered}
-                              onClick={() => handleAnswerSelect(opt.key)}
-                              className={`w-full text-left p-3.5 rounded-xl border transition-all flex items-center justify-between gap-3 ${cardClass}`}
-                            >
-                              <div className="flex items-center gap-3">
-                                <span
-                                  className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-extrabold shrink-0 ${
-                                    isAnswered && isCorrectOpt
-                                      ? "bg-emerald-600 text-white"
-                                      : isAnswered && isSelected
-                                      ? "bg-rose-600 text-white"
-                                      : "bg-slate-100 text-slate-700 border border-slate-300"
-                                  }`}
-                                >
-                                  {opt.key}
+                        {/* AUDIO OR QUESTION STEM */}
+                        <div className="space-y-3">
+                          {activeQuestion.section === "Listening" ? (
+                            <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-2.5">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <span className="text-xs font-extrabold text-amber-300">
+                                  Audio Listening Topik {currentTopic.code}
                                 </span>
-                                <span className="text-xs sm:text-sm font-semibold">{opt.text}</span>
-                              </div>
-                              {isAnswered && isCorrectOpt && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
-                              {isAnswered && isSelected && !isCorrectOpt && <XCircle className="w-5 h-5 text-rose-600 shrink-0" />}
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* EXPLANATION */}
-                      {userAnswers[activeQuestion.id] && (
-                        <div className="rounded-2xl border border-slate-200 bg-slate-900 text-slate-100 p-4 sm:p-5 space-y-3.5">
-                          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
-                            {userAnswers[activeQuestion.id].isCorrect ? (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-extrabold border border-emerald-500/30">
-                                <CheckCircle2 className="w-4 h-4" /> Jawaban Benar!
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 text-xs font-extrabold border border-rose-500/30">
-                                <XCircle className="w-4 h-4" /> Kurang Tepat (Kunci: {activeQuestion.correctKey})
-                              </span>
-                            )}
-
-                            <div className="flex items-center gap-2">
-                              {!userAnswers[activeQuestion.id].isCorrect && (
                                 <button
                                   type="button"
-                                  onClick={() => handleChallengeLecturer(userAnswers[activeQuestion.id].selectedKey)}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-extrabold"
+                                  onClick={() =>
+                                    handlePlayAudio(
+                                      activeQuestion.id,
+                                      activeQuestion.audioScript || activeQuestion.prompt,
+                                      false,
+                                      0.94
+                                    )
+                                  }
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold"
                                 >
-                                  <HelpCircle className="w-3.5 h-3.5" />
-                                  <span>Kenapa bukan {userAnswers[activeQuestion.id].selectedKey}?</span>
+                                  <Headphones className="w-4 h-4" />
+                                  <span>Putar Audio</span>
                                 </button>
-                              )}
+                              </div>
+                              <p className="text-xs sm:text-sm font-bold text-slate-100">
+                                {activeQuestion.prompt}
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-sm sm:text-base font-bold text-slate-900 leading-relaxed">
+                                {activeQuestion.prompt}
+                              </p>
                               <button
                                 type="button"
-                                onClick={() => speakText(activeQuestion.voiceWalkthrough)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold"
+                                onClick={() => speakText(activeQuestion.prompt, "en-US", 0.92)}
+                                className="shrink-0 p-2 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-[#1E3A8A] border border-slate-200"
                               >
-                                <Volume2 className="w-3.5 h-3.5" />
-                                <span>Ulangi Suara</span>
+                                <Volume2 className="w-4 h-4" />
                               </button>
                             </div>
-                          </div>
+                          )}
 
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-                            <div className="p-2.5 rounded-xl bg-slate-800/90 border border-slate-700">
-                              <div className="text-slate-400 font-bold uppercase text-[10px]">Subject / Fokus</div>
-                              <div className="text-emerald-300 font-semibold mt-0.5">{activeQuestion.breakdown.subject}</div>
-                            </div>
-                            <div className="p-2.5 rounded-xl bg-slate-800/90 border border-slate-700">
-                              <div className="text-slate-400 font-bold uppercase text-[10px]">Verb / Kunci</div>
-                              <div className="text-sky-300 font-semibold mt-0.5">{activeQuestion.breakdown.verb}</div>
-                            </div>
-                            <div className="p-2.5 rounded-xl bg-slate-800/90 border border-slate-700">
-                              <div className="text-slate-400 font-bold uppercase text-[10px]">Jebakan Soal</div>
-                              <div className="text-amber-300 font-semibold mt-0.5">{activeQuestion.breakdown.trap}</div>
-                            </div>
-                          </div>
+                          {showTranslations && activeQuestion.translationId && (
+                            <p className="text-xs sm:text-sm text-slate-600 bg-amber-50/70 border border-amber-200/80 px-3.5 py-2.5 rounded-xl">
+                              <span className="font-bold text-amber-900">Terjemahan: </span>
+                              {activeQuestion.translationId}
+                            </p>
+                          )}
 
-                          <div className="space-y-1.5 text-xs">
-                            {activeQuestion.options.map((opt) => (
-                              <div
-                                key={opt.key}
-                                className={`p-2.5 rounded-xl border ${
-                                  opt.key === activeQuestion.correctKey
-                                    ? "bg-emerald-950/60 border-emerald-700/70 text-emerald-100"
-                                    : "bg-slate-800/50 border-slate-700/70 text-slate-300"
-                                }`}
+                          {!userAnswers[activeQuestion.id] && activeQuestion.hintId && (
+                            <div>
+                              <button
+                                type="button"
+                                onClick={() => setShowHint((prev) => !prev)}
+                                className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 hover:text-amber-800"
                               >
-                                <span className="font-extrabold mr-1.5">{opt.key}.</span>
-                                {activeQuestion.optionAnalysis[opt.key]}
-                              </div>
-                            ))}
-                          </div>
+                                <Lightbulb className="w-3.5 h-3.5" />
+                                <span>{showHint ? "Sembunyikan Petunjuk" : "Butuh Petunjuk Dosen?"}</span>
+                              </button>
+                              {showHint && (
+                                <div className="mt-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
+                                  {activeQuestion.hintId}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      )}
 
-                      {/* PREV / NEXT */}
-                      <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                        <button
-                          type="button"
-                          disabled={activeTab === "contoh" ? topicExampleIndex === 0 : currentQuestionIndex === 0}
-                          onClick={() => {
-                            stopSpeaking();
-                            if (activeTab === "contoh") setTopicExampleIndex((i) => Math.max(0, i - 1));
-                            else setCurrentQuestionIndex((i) => Math.max(0, i - 1));
-                            setHighlightedLine(null);
-                            setShowHint(false);
-                          }}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-40"
-                        >
-                          <ChevronLeft className="w-4 h-4" />
-                          <span>Sebelumnya</span>
-                        </button>
+                        {/* OPTIONS */}
+                        <div className="space-y-2.5">
+                          {activeQuestion.options.map((opt) => {
+                            const userAns = userAnswers[activeQuestion.id];
+                            const isAnswered = Boolean(userAns);
+                            const isSelected = userAns?.selectedKey === opt.key;
+                            const isCorrectOpt = opt.key === activeQuestion.correctKey;
 
-                        {activeTab === "contoh" ? (
-                          topicExampleIndex < currentTopic.questions.length - 1 ? (
+                            let cardClass = "bg-white border-slate-200 hover:border-[#1E3A8A] hover:bg-blue-50/40 text-slate-800";
+                            if (isAnswered) {
+                              if (isCorrectOpt) cardClass = "bg-emerald-50 border-emerald-500 text-emerald-950 ring-2 ring-emerald-500/20";
+                              else if (isSelected) cardClass = "bg-rose-50 border-rose-400 text-rose-950";
+                              else cardClass = "bg-slate-50 border-slate-200 text-slate-400 opacity-75";
+                            }
+
+                            return (
+                              <button
+                                key={opt.key}
+                                type="button"
+                                disabled={isAnswered}
+                                onClick={() => handleAnswerSelect(opt.key)}
+                                className={`w-full text-left p-3.5 rounded-xl border transition-all flex items-center justify-between gap-3 ${cardClass}`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <span
+                                    className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-extrabold shrink-0 ${
+                                      isAnswered && isCorrectOpt
+                                        ? "bg-emerald-600 text-white"
+                                        : isAnswered && isSelected
+                                        ? "bg-rose-600 text-white"
+                                        : "bg-slate-100 text-slate-700 border border-slate-300"
+                                    }`}
+                                  >
+                                    {opt.key}
+                                  </span>
+                                  <span className="text-xs sm:text-sm font-semibold">{opt.text}</span>
+                                </div>
+                                {isAnswered && isCorrectOpt && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
+                                {isAnswered && isSelected && !isCorrectOpt && <XCircle className="w-5 h-5 text-rose-600 shrink-0" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* EXPLANATION */}
+                        {userAnswers[activeQuestion.id] && (
+                          <div className="rounded-2xl border border-slate-200 bg-slate-900 text-slate-100 p-4 sm:p-5 space-y-3.5">
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                              {userAnswers[activeQuestion.id].isCorrect ? (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-extrabold border border-emerald-500/30">
+                                  <CheckCircle2 className="w-4 h-4" /> Jawaban Benar!
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 text-xs font-extrabold border border-rose-500/30">
+                                  <XCircle className="w-4 h-4" /> Kurang Tepat (Kunci: {activeQuestion.correctKey})
+                                </span>
+                              )}
+
+                              <div className="flex items-center gap-2">
+                                {!userAnswers[activeQuestion.id].isCorrect && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleChallengeLecturer(userAnswers[activeQuestion.id].selectedKey)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-extrabold"
+                                  >
+                                    <HelpCircle className="w-3.5 h-3.5" />
+                                    <span>Kenapa bukan {userAnswers[activeQuestion.id].selectedKey}?</span>
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => speakText(activeQuestion.voiceWalkthrough)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold"
+                                >
+                                  <Volume2 className="w-3.5 h-3.5" />
+                                  <span>Suara</span>
+                                </button>
+                              </div>
+                            </div>
+
+                            {activeQuestion.breakdown && (
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                                <div className="p-2.5 rounded-xl bg-slate-800 border border-slate-700">
+                                  <div className="text-slate-400 font-bold uppercase text-[10px]">Fokus / Subject</div>
+                                  <div className="text-emerald-300 font-semibold mt-0.5">{activeQuestion.breakdown.subject}</div>
+                                </div>
+                                <div className="p-2.5 rounded-xl bg-slate-800 border border-slate-700">
+                                  <div className="text-slate-400 font-bold uppercase text-[10px]">Verb / Kunci</div>
+                                  <div className="text-sky-300 font-semibold mt-0.5">{activeQuestion.breakdown.verb}</div>
+                                </div>
+                                <div className="p-2.5 rounded-xl bg-slate-800 border border-slate-700">
+                                  <div className="text-slate-400 font-bold uppercase text-[10px]">Jebakan</div>
+                                  <div className="text-amber-300 font-semibold mt-0.5">{activeQuestion.breakdown.trap}</div>
+                                </div>
+                              </div>
+                            )}
+
+                            {activeQuestion.optionAnalysis && (
+                              <div className="space-y-1.5 text-xs">
+                                {activeQuestion.options.map((opt) => (
+                                  <div
+                                    key={opt.key}
+                                    className={`p-2 rounded-xl border ${
+                                      opt.key === activeQuestion.correctKey
+                                        ? "bg-emerald-950/60 border-emerald-700/70 text-emerald-100"
+                                        : "bg-slate-800/50 border-slate-700/70 text-slate-300"
+                                    }`}
+                                  >
+                                    <span className="font-extrabold mr-1.5">{opt.key}.</span>
+                                    {activeQuestion.optionAnalysis[opt.key]}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* PREV / NEXT */}
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                          <button
+                            type="button"
+                            disabled={topicExampleIndex === 0}
+                            onClick={() => {
+                              stopSpeaking();
+                              setTopicExampleIndex((i) => Math.max(0, i - 1));
+                              setHighlightedLine(null);
+                              setShowHint(false);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-40"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                            <span>Sebelumnya</span>
+                          </button>
+
+                          {topicExampleIndex < activeTopicQuestions.length - 1 ? (
                             <button
                               type="button"
                               onClick={() => {
@@ -2206,7 +2192,7 @@ export default function App() {
                               }}
                               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-amber-400 text-slate-950 hover:bg-amber-300"
                             >
-                              <span>Contoh Berikutnya</span>
+                              <span>Soal Berikutnya</span>
                               <ChevronRight className="w-4 h-4" />
                             </button>
                           ) : (
@@ -2214,38 +2200,15 @@ export default function App() {
                               type="button"
                               onClick={() => {
                                 stopSpeaking();
-                                setActiveTab("latihan");
-                                setCurrentQuestionIndex(0);
+                                setAppMode("exam");
                               }}
                               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#1E3A8A] text-white hover:bg-blue-900"
                             >
-                              <span>Lanjut Bank 20 Soal Acak</span>
+                              <span>Uji di Simulasi Real TOEFL ITP</span>
                               <ArrowRight className="w-4 h-4" />
                             </button>
-                          )
-                        ) : currentQuestionIndex < activePracticeQuestions.length - 1 ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              stopSpeaking();
-                              setCurrentQuestionIndex((i) => i + 1);
-                              setShowHint(false);
-                            }}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#1E3A8A] text-white hover:bg-blue-900"
-                          >
-                            <span>Soal Berikutnya</span>
-                            <ChevronRight className="w-4 h-4" />
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={handleReshufflePractice}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700"
-                          >
-                            <RefreshCw className="w-4 h-4" />
-                            <span>Acak 20 Soal Baru</span>
-                          </button>
-                        )}
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -2254,178 +2217,340 @@ export default function App() {
             )}
 
             {/* ================================================================
-                MODE 2: MINI DIAGNOSTIC TEST (9 SOAL)
+                MODE 4: SIMULASI REAL TOEFL ITP LEVEL 1 (140 SOAL • 115 MENIT)
                ================================================================ */}
-            {appMode === "diagnostic" && (
+            {appMode === "exam" && (
               <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs space-y-5">
-                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
-                  <div>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-blue-100 text-[#1E3A8A]">
-                      Mini Diagnostic Test • 9 Soal
-                    </span>
-                    <h2 className="text-base sm:text-xl font-extrabold text-slate-900 mt-1">
-                      Pemetaan Skor Awal &amp; Rekomendasi Modul Prioritas
-                    </h2>
+                {!itpExam ? (
+                  <div className="space-y-5">
+                    <div className="border-b border-slate-100 pb-4">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-rose-100 text-rose-800">
+                        Simulasi Resmi TOEFL ITP Level 1
+                      </span>
+                      <h2 className="text-lg sm:text-2xl font-extrabold text-slate-900 mt-1">
+                        Ujian Simulasi TOEFL ITP Lengkap (Skor Resmi 310–677)
+                      </h2>
+                      <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">
+                        Format, urutan seksi, batas waktu, aturan audio 1x putar, hingga konversi skor (Section 1: 31–68, Section 2: 31–68, Section 3: 31–67) dibuat menyerupai tes <strong>TOEFL ITP Level 1 asli</strong>.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-1">
+                        <span className="text-[10px] font-black uppercase text-indigo-700">Section 1</span>
+                        <h3 className="text-sm font-extrabold text-slate-900">Listening Comprehension</h3>
+                        <p className="text-xs text-slate-600">50 Soal • 35 Menit</p>
+                        <p className="text-[11px] text-slate-500">Part A (30 Short), Part B (8 Long), Part C (12 Talks) — Audio 1x Putar.</p>
+                      </div>
+                      <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200 space-y-1">
+                        <span className="text-[10px] font-black uppercase text-[#1E3A8A]">Section 2</span>
+                        <h3 className="text-sm font-extrabold text-slate-900">Structure &amp; Written Expression</h3>
+                        <p className="text-xs text-slate-600">40 Soal • 25 Menit</p>
+                        <p className="text-[11px] text-slate-500">Part A (No. 1–15 Melengkapi Kalimat) &amp; Part B (No. 16–40 Error Recognition).</p>
+                      </div>
+                      <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-1">
+                        <span className="text-[10px] font-black uppercase text-emerald-700">Section 3</span>
+                        <h3 className="text-sm font-extrabold text-slate-900">Reading Comprehension</h3>
+                        <p className="text-xs text-slate-600">50 Soal • 55 Menit</p>
+                        <p className="text-[11px] text-slate-500">5 Teks Akademik Utuh (10 Soal per Teks) dalam tampilan Split-Screen.</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => handleStartItpExam("full")}
+                        className="p-4 rounded-2xl bg-[#1E3A8A] hover:bg-blue-900 text-white text-left space-y-1 shadow-sm transition"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-extrabold">Mulai Full Real TOEFL ITP</span>
+                          <Play className="w-4 h-4 text-amber-300" />
+                        </div>
+                        <p className="text-xs text-blue-200">140 Soal Lengkap • 115 Menit (35m + 25m + 55m)</p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleStartItpExam("mini")}
+                        className="p-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-left space-y-1 shadow-sm transition"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-extrabold">Mulai Mini ITP (Versi Cepat)</span>
+                          <Zap className="w-4 h-4 text-amber-300" />
+                        </div>
+                        <p className="text-xs text-slate-300">35 Soal (12 Listen + 11 Struct + 12 Read) • 30 Menit</p>
+                      </button>
+                    </div>
                   </div>
-                  {diagFinished && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDiagIndex(0);
-                        setDiagAnswers({});
-                        setDiagFinished(false);
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700"
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" />
-                      <span>Ulangi Tes</span>
-                    </button>
-                  )}
-                </div>
+                ) : itpFinished && itpScoreReport ? (
+                  <div className="space-y-5">
+                    <div className="p-6 rounded-2xl bg-gradient-to-br from-[#1E3A8A] via-blue-900 to-slate-900 text-white text-center space-y-2">
+                      <span className="inline-block px-3 py-1 rounded-full bg-amber-400 text-slate-950 text-[11px] font-black uppercase">
+                        Official-Style TOEFL ITP Score Report • {itpScoreReport.awardTier}
+                      </span>
+                      <div className="text-5xl sm:text-6xl font-black text-amber-300 pt-1">
+                        {itpScoreReport.totalScore}
+                      </div>
+                      <div className="text-xs sm:text-sm font-bold text-blue-100">
+                        CEFR Level: {itpScoreReport.cefr}
+                      </div>
+                      <p className="text-xs text-blue-200 max-w-md mx-auto">
+                        {itpScoreReport.totalScore >= 550
+                          ? "SELAMAT! Kamu telah menembus target skor 550+!"
+                          : "Terus berlatih! Semua soal yang salah dari simulasi ini telah otomatis disimpan ke Error Log."}
+                      </p>
+                    </div>
 
-                {!diagFinished ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                        <div className="text-xs font-bold text-slate-500">Section 1: Listening</div>
+                        <div className="text-2xl font-black text-[#1E3A8A] mt-1">{itpScoreReport.scaledS1}</div>
+                        <div className="text-[11px] text-slate-500">Benar: {itpScoreReport.rawS1}/{itpScoreReport.totalS1} (Skala 31–68)</div>
+                      </div>
+                      <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                        <div className="text-xs font-bold text-slate-500">Section 2: Structure</div>
+                        <div className="text-2xl font-black text-[#1E3A8A] mt-1">{itpScoreReport.scaledS2}</div>
+                        <div className="text-[11px] text-slate-500">Benar: {itpScoreReport.rawS2}/{itpScoreReport.totalS2} (Skala 31–68)</div>
+                      </div>
+                      <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                        <div className="text-xs font-bold text-slate-500">Section 3: Reading</div>
+                        <div className="text-2xl font-black text-[#1E3A8A] mt-1">{itpScoreReport.scaledS3}</div>
+                        <div className="text-[11px] text-slate-500">Benar: {itpScoreReport.rawS3}/{itpScoreReport.totalS3} (Skala 31–67)</div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setItpExam(null)}
+                        className="px-5 py-2.5 rounded-xl bg-[#1E3A8A] hover:bg-blue-900 text-white text-xs font-extrabold"
+                      >
+                        Kembali ke Menu Simulasi ITP
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAppMode("vault");
+                          setVaultSubTab("errorlog");
+                        }}
+                        className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-extrabold"
+                      >
+                        Review Kesalahan di Error Log →
+                      </button>
+                    </div>
+                  </div>
+                ) : (
                   (() => {
-                    const dq = DIAGNOSTIC_QUESTIONS[diagIndex];
-                    const ans = diagAnswers[dq.id];
-                    return (
-                      <div className="space-y-4">
-                        <div>
-                          <div className="flex justify-between text-xs font-bold text-slate-500 mb-1.5">
-                            <span>Soal {diagIndex + 1} dari {DIAGNOSTIC_QUESTIONS.length}</span>
-                            <span>Section: {dq.section}</span>
+                    const sec = itpExam.sections[itpSectionIdx];
+                    const currentQ = sec.questions[itpQIndex];
+                    const answeredInSec = sec.questions.filter((q) => Boolean(itpAnswers[q.id])).length;
+
+                    if (itpShowDirections) {
+                      return (
+                        <div className="p-6 rounded-2xl bg-slate-900 text-white space-y-4">
+                          <div className="flex items-center justify-between">
+                            <span className="px-3 py-1 rounded-full bg-amber-400 text-slate-950 text-xs font-black uppercase">
+                              {sec.name}
+                            </span>
+                            <span className="font-mono text-sm font-bold text-amber-300">
+                              Waktu: {Math.round(sec.durationSeconds / 60)} Menit • {sec.questions.length} Soal
+                            </span>
                           </div>
-                          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-[#1E3A8A] transition-all"
-                              style={{ width: `${((diagIndex + 1) / DIAGNOSTIC_QUESTIONS.length) * 100}%` }}
-                            />
+                          <h3 className="text-base sm:text-lg font-extrabold">Official Section Directions</h3>
+                          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">{sec.directions}</p>
+                          <div className="p-3 rounded-xl bg-white/10 text-xs text-amber-200">
+                            Perhatian: Seperti tes TOEFL ITP asli, setelah kamu lanjut ke seksi berikutnya, kamu tidak dapat kembali ke seksi sebelumnya. Tidak ada pengurangan nilai untuk jawaban salah.
                           </div>
-                        </div>
-
-                        {dq.audioScript && (
-                          <div className="p-4 rounded-xl bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3">
-                            <span className="text-xs font-bold text-amber-300">Audio Diagnostic ({dq.section})</span>
-                            <button
-                              type="button"
-                              onClick={() => speakText(dq.audioScript, "en-US", 0.94)}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold"
-                            >
-                              <Headphones className="w-4 h-4" />
-                              <span>Putar Audio Dialog</span>
-                            </button>
-                          </div>
-                        )}
-
-                        {dq.miniPassage && (
-                          <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs sm:text-sm text-slate-800 leading-relaxed font-serif">
-                            {dq.miniPassage}
-                          </div>
-                        )}
-
-                        <p className="text-sm sm:text-base font-bold text-slate-900">{dq.prompt}</p>
-
-                        <div className="space-y-2">
-                          {dq.options.map((opt) => {
-                            const isPicked = ans?.selectedKey === opt.key;
-                            const isRight = opt.key === dq.correctKey;
-                            let cls = "bg-white border-slate-200 hover:border-[#1E3A8A] text-slate-800";
-                            if (ans) {
-                              if (isRight) cls = "bg-emerald-50 border-emerald-500 text-emerald-950 font-bold";
-                              else if (isPicked) cls = "bg-rose-50 border-rose-400 text-rose-950";
-                            }
-                            return (
-                              <button
-                                key={opt.key}
-                                type="button"
-                                disabled={Boolean(ans)}
-                                onClick={() => handleDiagnosticAnswer(dq, opt.key)}
-                                className={`w-full text-left p-3.5 rounded-xl border text-xs sm:text-sm flex items-center gap-3 ${cls}`}
-                              >
-                                <span className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-300 flex items-center justify-center font-black text-xs">
-                                  {opt.key}
-                                </span>
-                                <span>{opt.text}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        {ans && (
-                          <div className="p-3.5 rounded-xl bg-slate-900 text-slate-100 text-xs space-y-1">
-                            <div className="font-extrabold text-amber-300">
-                              {ans.isCorrect ? "Tepat Sekali!" : `Belum Tepat (Kunci: ${dq.correctKey}) — Disimpan ke Error Log`}
-                            </div>
-                            <p>{dq.explanation}</p>
-                          </div>
-                        )}
-
-                        <div className="flex justify-between pt-2 border-t border-slate-100">
                           <button
                             type="button"
-                            disabled={diagIndex === 0}
-                            onClick={() => setDiagIndex((i) => Math.max(0, i - 1))}
-                            className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 disabled:opacity-40"
+                            onClick={() => setItpShowDirections(false)}
+                            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs sm:text-sm"
                           >
-                            Sebelumnya
+                            <span>Mulai {sec.name}</span>
+                            <ArrowRight className="w-4 h-4" />
                           </button>
-                          {diagIndex < DIAGNOSTIC_QUESTIONS.length - 1 ? (
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="space-y-4">
+                        {/* TOP EXAM BAR */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-200">
+                          <div>
+                            <span className="text-[11px] font-black uppercase text-[#1E3A8A]">{sec.name}</span>
+                            <div className="text-xs text-slate-500">
+                              Soal {itpQIndex + 1} / {sec.questions.length} • Terjawab: {answeredInSec}/{sec.questions.length}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`px-3 py-1.5 rounded-xl font-mono text-sm font-black border ${
+                                itpSecondsLeft < 120
+                                  ? "bg-rose-600 text-white border-rose-700 animate-pulse"
+                                  : "bg-slate-900 text-amber-300 border-slate-800"
+                              }`}
+                            >
+                              {formatTimer(itpSecondsLeft)}
+                            </span>
                             <button
                               type="button"
-                              onClick={() => setDiagIndex((i) => i + 1)}
-                              className="px-5 py-2 rounded-xl bg-[#1E3A8A] text-white text-xs font-extrabold"
+                              onClick={handleAdvanceItpSection}
+                              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold"
                             >
-                              Soal Berikutnya →
+                              {itpSectionIdx < 2 ? "Selesai Seksi →" : "Kumpulkan Ujian"}
                             </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={handleFinishDiagnostic}
-                              className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold"
-                            >
-                              Lihat Skor &amp; Rekomendasi
-                            </button>
+                          </div>
+                        </div>
+
+                        {/* READING SPLIT-SCREEN OR STANDARD LAYOUT */}
+                        <div className={sec.id === 3 ? "grid grid-cols-1 xl:grid-cols-12 gap-4 items-start" : ""}>
+                          {sec.id === 3 && currentQ.passageLines && (
+                            <div className="xl:col-span-6 p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 max-h-[420px] overflow-y-auto">
+                              <div className="text-[11px] font-extrabold uppercase text-emerald-700">
+                                Passage {(currentQ.passageIndex || 0) + 1}: {currentQ.passageTitle}
+                              </div>
+                              <div className="space-y-2 text-xs sm:text-sm leading-relaxed text-slate-800 font-serif">
+                                {currentQ.passageLines.map((line, idx) => (
+                                  <div key={idx} className="flex gap-2">
+                                    <span className="font-mono text-[10px] font-bold text-slate-400 pt-0.5">
+                                      {String(idx + 1).padStart(2, "0")}
+                                    </span>
+                                    <p>{line}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
                           )}
+
+                          <div className={`${sec.id === 3 ? "xl:col-span-6" : ""} space-y-4`}>
+                            {sec.id === 1 && (
+                              <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-2">
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="font-extrabold text-amber-300">
+                                    {currentQ.part} {currentQ.groupTitle ? `• ${currentQ.groupTitle}` : ""}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400">Real ITP: Audio 1x Putar</span>
+                                </div>
+                                <button
+                                  type="button"
+                                  disabled={Boolean(playedAudioIds[`itp-${currentQ.groupTitle || currentQ.id}`])}
+                                  onClick={() =>
+                                    handlePlayAudio(
+                                      `itp-${currentQ.groupTitle || currentQ.id}`,
+                                      currentQ.audioScript || currentQ.prompt,
+                                      true,
+                                      0.94
+                                    )
+                                  }
+                                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-extrabold ${
+                                    playedAudioIds[`itp-${currentQ.groupTitle || currentQ.id}`]
+                                      ? "bg-slate-700 text-slate-400 cursor-not-allowed"
+                                      : "bg-blue-600 hover:bg-blue-500 text-white"
+                                  }`}
+                                >
+                                  <Headphones className="w-4 h-4" />
+                                  <span>
+                                    {playedAudioIds[`itp-${currentQ.groupTitle || currentQ.id}`]
+                                      ? "Audio Sudah Diputar (1/1)"
+                                      : "Putar Audio Rekaman (1x)"}
+                                  </span>
+                                </button>
+                              </div>
+                            )}
+
+                            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="font-extrabold text-[#1E3A8A]">
+                                  No. {itpQIndex + 1} {currentQ.part ? `• ${currentQ.part}` : ""}
+                                </span>
+                              </div>
+                              <p className="text-sm sm:text-base font-bold text-slate-900">{currentQ.prompt}</p>
+                              <div className="space-y-2">
+                                {currentQ.options.map((opt) => {
+                                  const picked = itpAnswers[currentQ.id] === opt.key;
+                                  return (
+                                    <button
+                                      key={opt.key}
+                                      type="button"
+                                      onClick={() =>
+                                        setItpAnswers((prev) => ({ ...prev, [currentQ.id]: opt.key }))
+                                      }
+                                      className={`w-full text-left p-3 rounded-xl border text-xs sm:text-sm flex items-center gap-3 transition ${
+                                        picked
+                                          ? "bg-blue-50 border-[#1E3A8A] text-[#1E3A8A] font-bold ring-1 ring-[#1E3A8A]"
+                                          : "bg-white border-slate-200 hover:border-blue-300 text-slate-800"
+                                      }`}
+                                    >
+                                      <span
+                                        className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs shrink-0 ${
+                                          picked ? "bg-[#1E3A8A] text-white" : "bg-slate-100 text-slate-700 border border-slate-300"
+                                        }`}
+                                      >
+                                        {opt.key}
+                                      </span>
+                                      <span>{opt.text}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                              <button
+                                type="button"
+                                disabled={itpQIndex === 0}
+                                onClick={() => setItpQIndex((i) => Math.max(0, i - 1))}
+                                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 disabled:opacity-40"
+                              >
+                                ← Sebelumnya
+                              </button>
+                              {itpQIndex < sec.questions.length - 1 ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setItpQIndex((i) => i + 1)}
+                                  className="px-4 py-2 rounded-xl bg-[#1E3A8A] text-white text-xs font-extrabold"
+                                >
+                                  Berikutnya →
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={handleAdvanceItpSection}
+                                  className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-extrabold"
+                                >
+                                  {itpSectionIdx < 2 ? "Lanjut ke Seksi Berikutnya →" : "Selesai & Lihat Skor ITP"}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* COMPACT QUESTION NAVIGATOR */}
+                        <div className="pt-3 border-t border-slate-100">
+                          <div className="text-[11px] font-bold text-slate-500 mb-2">Navigasi Nomor Seksi Ini:</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {sec.questions.map((q, idx) => (
+                              <button
+                                key={q.id}
+                                type="button"
+                                onClick={() => setItpQIndex(idx)}
+                                className={`w-7 h-7 rounded-lg text-[11px] font-extrabold border ${
+                                  idx === itpQIndex
+                                    ? "bg-[#1E3A8A] text-white border-[#1E3A8A]"
+                                    : itpAnswers[q.id]
+                                    ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                    : "bg-slate-50 text-slate-600 border-slate-200"
+                                }`}
+                              >
+                                {idx + 1}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     );
                   })()
-                ) : (
-                  <div className="space-y-5">
-                    <div className="p-6 rounded-2xl bg-gradient-to-br from-[#1E3A8A] to-blue-700 text-white text-center space-y-1">
-                      <div className="text-xs uppercase tracking-widest text-blue-200 font-bold">Estimasi Skor Awal Kamu</div>
-                      <div className="text-5xl font-black text-amber-300">{diagnosticScore}</div>
-                      <p className="text-xs text-blue-100 max-w-md mx-auto pt-1">
-                        {diagnosticScore >= 550
-                          ? "Luar biasa! Kamu sudah berada di level 550+. Fokuskan latihan pada modul Advance & Simulasi Timer."
-                          : "Fondasi sudah terbentuk! Pelajari modul prioritas di bawah ini untuk langsung mendongkrak skormu ke 550+."}
-                      </p>
-                    </div>
-
-                    <div className="space-y-2.5">
-                      <h3 className="text-sm font-extrabold text-slate-900">Rekomendasi Modul Prioritas:</h3>
-                      {DIAGNOSTIC_QUESTIONS.filter((q) => !diagAnswers[q.id]?.isCorrect).length === 0 ? (
-                        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800">
-                          Sempurna! Semua 9 soal benar. Langsung uji dirimu di Modul Level 3 (Advance 550+).
-                        </div>
-                      ) : (
-                        DIAGNOSTIC_QUESTIONS.filter((q) => !diagAnswers[q.id]?.isCorrect).map((q) => (
-                          <div key={q.id} className="p-3.5 rounded-xl border border-rose-200 bg-rose-50/40 flex flex-wrap items-center justify-between gap-2">
-                            <div>
-                              <span className="text-[11px] font-extrabold text-rose-700">Perlu Diperkuat • {q.section} ({q.recommendedCode})</span>
-                              <div className="text-xs font-bold text-slate-900">{q.explanation}</div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleSelectTopic(q.recommendedTopicId, "materi")}
-                              className="px-3.5 py-2 rounded-xl bg-[#1E3A8A] text-white text-xs font-extrabold hover:bg-blue-900"
-                            >
-                              Buka Modul {q.recommendedCode} →
-                            </button>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
                 )}
               </div>
             )}
