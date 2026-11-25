@@ -2,9 +2,9 @@ import './globals.css';
 import Script from 'next/script';
 
 export const metadata = {
-  title: 'TOEFL 550 Academy — AI Lecturer & Quiz App',
+  title: 'TOEFL 550 Academy — Lecturer TOEFL AI & Quiz App',
   description:
-    'Aplikasi Persiapan TOEFL ITP Target Skor 550+ dengan AI Dosen Bilingual, Bank 300+ Soal, dan Simulasi Interaktif.',
+    'Aplikasi Persiapan TOEFL ITP Target Skor 550+ dengan Lecturer TOEFL AI Bilingual, Bank 300+ Soal, dan Simulasi Interaktif.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
