@@ -66,28 +66,17 @@ import {
   buildRealToeflItpExam,
   convertToeflItpScore
 } from "./toeflData";
+import {
+  LECTURER_NAME,
+  detectPromptLanguageStyle,
+  generateSmartFallbackReply
+} from "@/lib/lecturerAI";
 
 // ============================================================================
 // 1. SAFE RUNTIME, STORAGE & NATURAL BILINGUAL VOICE HELPERS
 // ============================================================================
 const isBrowser = typeof window !== "undefined" && typeof document !== "undefined";
 const STORAGE_KEY = "toefl_550_complete_syllabus_v6";
-
-function getSafeGeminiApiKey() {
-  try {
-    if (typeof process !== "undefined" && process.env) {
-      if (process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
-        return String(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
-      }
-      if (process.env.GEMINI_API_KEY) {
-        return String(process.env.GEMINI_API_KEY);
-      }
-    }
-  } catch {
-    // Ignore restricted environment access
-  }
-  return "";
-}
 
 function getSpeechSynthesisSafe() {
   if (!isBrowser || !("speechSynthesis" in window)) return null;
@@ -117,18 +106,22 @@ function detectLanguageSmart(text) {
 
   const idWords = [
     "yang", "dan", "di", "ke", "dari", "untuk", "dengan", "adalah", "ini", "itu",
-    "tidak", "bukan", "jika", "maka", "karena", "sehingga", "pada", "dalam",
-    "kata", "kalimat", "subjek", "kerja", "jawaban", "benar", "salah", "selalu",
-    "wajib", "jangan", "harus", "seperti", "atau", "oleh", "saat", "ketika",
-    "soal", "opsi", "rumus", "jebakan", "strategi", "menurut", "materi", "contoh",
-    "tunggal", "jamak", "benda", "pasif", "aktif", "hitung"
+    "tidak", "nggak", "gak", "bukan", "jika", "kalau", "kalo", "maka", "karena",
+    "sehingga", "pada", "dalam", "kata", "kalimat", "subjek", "kerja", "jawaban",
+    "benar", "salah", "selalu", "wajib", "jangan", "harus", "seperti", "atau",
+    "oleh", "saat", "ketika", "soal", "opsi", "rumus", "jebakan", "strategi",
+    "menurut", "materi", "contoh", "tunggal", "jamak", "benda", "pasif", "aktif",
+    "hitung", "kamu", "bisa", "pakai", "pake", "jadi", "biar", "coba", "tapi",
+    "buat", "aja", "sih", "nih", "ya", "banget", "gimana", "kenapa", "bedanya",
+    "bacaan", "teks", "skor", "latihan", "pola", "ciri", "trik", "intinya", "patokan"
   ];
 
   const enWords = [
     "the", "of", "and", "to", "in", "is", "are", "was", "were", "that", "for",
     "with", "as", "by", "on", "at", "from", "which", "who", "whose", "although",
     "because", "while", "when", "where", "have", "has", "had", "been", "being",
-    "would", "could", "should", "their", "they", "there", "than", "most", "more"
+    "would", "could", "should", "their", "they", "there", "than", "most", "more",
+    "always", "never", "first", "before", "after", "example", "sentence", "correct"
   ];
 
   const tokens = clean.match(/[a-z]+/g) || [];
@@ -194,62 +187,76 @@ function pickMostNaturalVoice(voices, targetLang) {
 }
 
 // ============================================================================
-// 2. SMART OFFLINE + GEMINI AI LECTURER ENGINE
+// 2. LECTURER TOEFL AI CLIENT ENGINE (API ROUTE + SMART OFFLINE FALLBACK)
 // ============================================================================
-function generateSmartFallbackReply(userQuestion, currentTopic) {
-  const q = String(userQuestion || "").toLowerCase();
-  const topicTitle = currentTopic?.title || "TOEFL Structure & Reading";
+async function askLecturerAI(userPrompt, chatHistory, currentTopic, activeQuestion) {
+  const detectedStyle = detectPromptLanguageStyle(userPrompt);
 
-  if (q.includes("gerund") || q.includes("ing") || q.includes("infinitive")) {
-    return "Aturan emas Gerund vs. Infinitive di TOEFL: Setiap kata kerja setelah preposisi wajib berbentuk V-ing (Gerund), termasuk frasa seperti look forward to, be accustomed to, dan contribute to. Kata kerja seperti enjoy, avoid, consider, recommend, dan suggest juga wajib diikuti V-ing!";
-  }
-  if (q.includes("passive") || q.includes("pasif") || q.includes("v3")) {
-    return "Rumus kalimat pasif adalah [be: is/am/are/was/were/been/be] + [V3]. Gunakan bentuk pasif jika subjek kalimat adalah benda mati yang menerima aksi atau terdapat kata by + pelaku setelah kata kerja.";
-  }
-  if (q.includes("countable") || q.includes("uncountable") || q.includes("information")) {
-    return "Kata benda Uncountable seperti information, equipment, advice, furniture, evidence, dan research tidak pernah boleh ditambah akhiran -s dan selalu memakai quantifier much / little / less serta Verb tunggal!";
-  }
-  if (q.includes("article") || q.includes("a ") || q.includes("an ")) {
-    return "Pilih a atau an berdasarkan bunyi pengucapannya: a university dan a European memakai a karena berbunyi konsonan Y, sedangkan an hour dan an honest man memakai an karena huruf H tidak dibaca.";
-  }
-  if (q.includes("inversi") || q.includes("inversion") || q.includes("not only") || q.includes("550")) {
-    return "Inversion adalah kunci menembus skor 550+! Jika kalimat diawali kata negatif (Not only, Rarely, Seldom, Never) atau pengandaian tanpa If (Had, Were, Should), susunan Auxiliary dan Subject wajib dibalik!";
-  }
-  return `Pertanyaan bagus terkait topik ${topicTitle}! Pastikan kamu selalu memetakan True Subject dan Main Verb terlebih dahulu, lalu cek kotak Jebakan Umum dan coba latihan Coret & Sorot di materi.`;
-}
+  const compactTopic = currentTopic
+    ? {
+        id: currentTopic.id,
+        code: currentTopic.code,
+        title: currentTopic.title,
+        level: currentTopic.level,
+        section: currentTopic.section,
+        paragraphs: currentTopic.paragraphs?.[0]
+          ? [
+              {
+                englishRule: currentTopic.paragraphs[0].englishRule,
+                examples: currentTopic.paragraphs[0].examples?.slice(0, 1) || []
+              }
+            ]
+          : []
+      }
+    : null;
 
-async function askGeminiLecturer(userPrompt, currentTopic, activeQuestion) {
-  const apiKey = getSafeGeminiApiKey();
-  if (!apiKey) return generateSmartFallbackReply(userPrompt, currentTopic);
+  const compactQuestion = activeQuestion
+    ? {
+        prompt: activeQuestion.prompt,
+        correctKey: activeQuestion.correctKey,
+        skillTag: activeQuestion.skillTag,
+        formula: activeQuestion.formula,
+        options: activeQuestion.options,
+        optionAnalysis: activeQuestion.optionAnalysis
+      }
+    : null;
 
-  const systemPrompt = `Kamu adalah "AI Dosen" (Prof. Arya Pratama, M.Ed.), dosen pembimbing TOEFL ITP spesialis strategi menuju skor 550+.
-Aturan:
-1. Jawab sesuai bahasa mahasiswa (ID atau EN).
-2. Ringkas, ramah, terstruktur (maksimal 3 paragraf pendek) tanpa simbol markdown agar nyaman dibacakan suara.
-3. Topik saat ini: "${currentTopic?.title || "TOEFL Prep"}".
-${activeQuestion ? `Soal aktif: "${activeQuestion.prompt}" dengan kunci "${activeQuestion.correctKey}".` : ""}`;
-
-  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(
-    apiKey
-  )}`;
+  const compactHistory = Array.isArray(chatHistory)
+    ? chatHistory
+        .filter((m) => m && m.id !== "welcome-1" && typeof m.text === "string")
+        .slice(-6)
+        .map((m) => ({ sender: m.sender, text: m.text }))
+    : [];
 
   try {
-    const response = await fetch(apiUrl, {
+    const response = await fetch("/api/lecturer", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: userPrompt }] }],
-        systemInstruction: { parts: [{ text: systemPrompt }] }
+        message: userPrompt,
+        history: compactHistory,
+        currentTopic: compactTopic,
+        activeQuestion: compactQuestion
       })
     });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const result = await response.json();
-    const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (text && typeof text === "string") return text;
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data?.reply && typeof data.reply === "string") {
+        return {
+          reply: data.reply,
+          languageStyle: data.languageStyle || detectedStyle
+        };
+      }
+    }
   } catch {
-    // Fallback below
+    // Offline / network fallback below
   }
-  return generateSmartFallbackReply(userPrompt, currentTopic);
+
+  return {
+    reply: generateSmartFallbackReply(userPrompt, currentTopic, activeQuestion, detectedStyle),
+    languageStyle: detectedStyle
+  };
 }
 
 // ============================================================================
@@ -365,7 +372,7 @@ function InteractiveSentenceBreakdown({ data, showTranslation }) {
 }
 
 // ============================================================================
-// 4. ANIMATED 2D/SVG AI DOSEN AVATAR COMPONENT
+// 4. ANIMATED 2D/SVG LECTURER TOEFL AI AVATAR COMPONENT
 // ============================================================================
 function LecturerAvatar({ state = "idle", isMuted = false, activeLang = "id-ID" }) {
   const statusLabel =
@@ -425,7 +432,7 @@ function LecturerAvatar({ state = "idle", isMuted = false, activeLang = "id-ID" 
             viewBox="0 0 120 120"
             className={`w-full h-full ${state === "encouraging" ? "avatar-nod" : "avatar-breathe"}`}
             role="img"
-            aria-label="Avatar AI Dosen Prof. Arya Pratama"
+            aria-label={`Avatar ${LECTURER_NAME}`}
           >
             <rect x="14" y="22" width="92" height="44" rx="6" fill="#E2E8F0" opacity="0.45" />
             <path d="M22 118 C24 94, 40 88, 60 88 C80 88, 96 94, 98 118 Z" fill="#1E3A8A" />
@@ -581,8 +588,8 @@ function CertificateModal({ isOpen, onClose, studentName, onChangeName, score })
             </div>
             <div className="pt-3 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-200/80">
               <div className="text-left">
-                <div className="font-bold text-slate-800">Prof. Arya Pratama, M.Ed.</div>
-                <div>AI Academic Advisor</div>
+                <div className="font-bold text-slate-800">{LECTURER_NAME}</div>
+                <div>Virtual TOEFL ITP Mentor</div>
               </div>
               <div className="text-right">
                 <div className="font-bold text-emerald-700">{score >= 550 ? "STATUS: LULUS TARGET 550+" : "STATUS: IN PROGRESS"}</div>
@@ -670,7 +677,7 @@ export default function App() {
   const [availableVoices, setAvailableVoices] = useState([]);
   const [voiceMode, setVoiceMode] = useState("auto");
   const [liveSubtitle, setLiveSubtitle] = useState(
-    `Selamat datang! Saya AI Dosen pembimbingmu. Silabus lengkap ${totalModulesCount} modul terstruktur siap kamu pelajari!`
+    `Halo! Saya ${LECTURER_NAME}. Silabus ${totalModulesCount} modul siap kamu jelajahi—tanya aja pakai bahasa Indonesia, English, atau campur keduanya!`
   );
 
   // Chat & Mic State (with proper Ref for clean stop)
@@ -678,7 +685,7 @@ export default function App() {
     {
       id: "welcome-1",
       sender: "dosen",
-      text: `Halo! Silabus lengkap ${totalModulesCount} Modul sudah tersedia (Basic, Intermediate, Advance 550+), lengkap dengan Diagnostic Test, latihan Coret & Sorot, Split-Screen Reading, Lab Listening, dan AWL 550+.`
+      text: `Hai! Saya ${LECTURER_NAME}, mentor TOEFL ITP kamu untuk target 550+. Ada materi grammar, trik reading, atau listening yang lagi bikin ragu? Langsung tanya aja—mau pakai bahasa Indonesia, full English, atau campur keduanya, bebas!`
     }
   ]);
   const [chatInput, setChatInput] = useState("");
@@ -730,29 +737,36 @@ export default function App() {
   // ==========================================================================
   useEffect(() => {
     if (!isBrowser) return;
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && typeof parsed === "object") {
-          if (parsed.userAnswers) setUserAnswers(parsed.userAnswers);
-          if (parsed.completedTopics) setCompletedTopics(parsed.completedTopics);
-          if (Array.isArray(parsed.bookmarkedIds)) setBookmarkedIds(parsed.bookmarkedIds);
-          if (typeof parsed.diagnosticScore === "number") setDiagnosticScore(parsed.diagnosticScore);
-          if (typeof parsed.streakCount === "number") setStreakCount(parsed.streakCount);
-          if (typeof parsed.gameHighScore === "number") setGameHighScore(parsed.gameHighScore);
-          if (typeof parsed.vocabHighScore === "number") setVocabHighScore(parsed.vocabHighScore);
-          if (typeof parsed.listeningScore === "number") setListeningScore(parsed.listeningScore);
-          if (typeof parsed.studentName === "string") setStudentName(parsed.studentName);
-          if (typeof parsed.selectedLevel === "string") setSelectedLevel(parsed.selectedLevel);
-          if (typeof parsed.selectedTopicId === "string") setSelectedTopicId(parsed.selectedTopicId);
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === "object") {
+            if (parsed.userAnswers) setUserAnswers(parsed.userAnswers);
+            if (parsed.completedTopics) setCompletedTopics(parsed.completedTopics);
+            if (Array.isArray(parsed.bookmarkedIds)) setBookmarkedIds(parsed.bookmarkedIds);
+            if (typeof parsed.diagnosticScore === "number") setDiagnosticScore(parsed.diagnosticScore);
+            if (typeof parsed.streakCount === "number") setStreakCount(parsed.streakCount);
+            if (typeof parsed.gameHighScore === "number") setGameHighScore(parsed.gameHighScore);
+            if (typeof parsed.vocabHighScore === "number") setVocabHighScore(parsed.vocabHighScore);
+            if (typeof parsed.listeningScore === "number") setListeningScore(parsed.listeningScore);
+            if (typeof parsed.studentName === "string") setStudentName(parsed.studentName);
+            if (typeof parsed.selectedLevel === "string") setSelectedLevel(parsed.selectedLevel);
+            if (typeof parsed.selectedTopicId === "string") setSelectedTopicId(parsed.selectedTopicId);
+          }
         }
+      } catch {
+        // Ignore storage errors
+      } finally {
+        if (!cancelled) setIsHydrated(true);
       }
-    } catch {
-      // Ignore storage errors
-    } finally {
-      setIsHydrated(true);
-    }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -911,32 +925,38 @@ export default function App() {
 
   useEffect(() => {
     if (!trapGameActive) return;
-    if (trapTimeLeft <= 0) {
-      setTrapGameActive(false);
-      setGameHighScore((prev) => Math.max(prev, trapScore));
-      return;
-    }
-    const id = setInterval(() => setTrapTimeLeft((t) => t - 1), 1000);
-    return () => clearInterval(id);
+    const id = setTimeout(() => {
+      if (trapTimeLeft <= 1) {
+        setTrapTimeLeft(0);
+        setTrapGameActive(false);
+        setGameHighScore((prev) => Math.max(prev, trapScore));
+      } else {
+        setTrapTimeLeft((t) => t - 1);
+      }
+    }, 1000);
+    return () => clearTimeout(id);
   }, [trapGameActive, trapTimeLeft, trapScore]);
 
   // Real TOEFL ITP Per-Section Timer (Auto-advances section when time runs out)
   useEffect(() => {
     if (!itpExam || itpFinished || itpShowDirections) return;
-    if (itpSecondsLeft <= 0) {
-      if (itpSectionIdx < itpExam.sections.length - 1) {
-        const nextIdx = itpSectionIdx + 1;
-        setItpSectionIdx(nextIdx);
-        setItpQIndex(0);
-        setItpShowDirections(true);
-        setItpSecondsLeft(itpExam.sections[nextIdx].durationSeconds);
+    const id = setTimeout(() => {
+      if (itpSecondsLeft <= 1) {
+        if (itpSectionIdx < itpExam.sections.length - 1) {
+          const nextIdx = itpSectionIdx + 1;
+          setItpSectionIdx(nextIdx);
+          setItpQIndex(0);
+          setItpShowDirections(true);
+          setItpSecondsLeft(itpExam.sections[nextIdx].durationSeconds);
+        } else {
+          setItpSecondsLeft(0);
+          setItpFinished(true);
+        }
       } else {
-        setItpFinished(true);
+        setItpSecondsLeft((s) => s - 1);
       }
-      return;
-    }
-    const id = setInterval(() => setItpSecondsLeft((s) => s - 1), 1000);
-    return () => clearInterval(id);
+    }, 1000);
+    return () => clearTimeout(id);
   }, [itpExam, itpFinished, itpShowDirections, itpSecondsLeft, itpSectionIdx]);
 
   // ==========================================================================
@@ -1094,11 +1114,14 @@ export default function App() {
     }
   };
 
-  const handlePlayAudio = (audioKey, scriptText, oneTimeOnly = true, rate = 0.94) => {
-    if (oneTimeOnly && playedAudioIds[audioKey]) return;
-    if (oneTimeOnly) setPlayedAudioIds((prev) => ({ ...prev, [audioKey]: true }));
-    speakText(scriptText, "en-US", rate);
-  };
+  const handlePlayAudio = useCallback(
+    (audioKey, scriptText, oneTimeOnly = true, rate = 0.94) => {
+      if (oneTimeOnly && playedAudioIds[audioKey]) return;
+      if (oneTimeOnly) setPlayedAudioIds((prev) => ({ ...prev, [audioKey]: true }));
+      speakText(scriptText, "en-US", rate);
+    },
+    [playedAudioIds, speakText]
+  );
 
   const toggleBookmark = (qId) => {
     setBookmarkedIds((prev) =>
@@ -1142,8 +1165,8 @@ export default function App() {
     if (!activeQuestion) return;
     const specificReason =
       activeQuestion.optionAnalysis?.[wrongKey] ||
-      `Opsi ${wrongKey} tidak sesuai dengan struktur tata bahasa kalimat tersebut.`;
-    const promptMsg = `Tantang Dosen: Kenapa bukan opsi ${wrongKey}?`;
+      `Opsi ${wrongKey} belum cocok dengan struktur kalimat di soal ini.`;
+    const promptMsg = `Kenapa bukan opsi ${wrongKey}?`;
     setShowDosenPanel(true);
     setChatMessages((prev) => [
       ...prev,
@@ -1158,15 +1181,21 @@ export default function App() {
     const trimmed = (overrideText !== null ? overrideText : chatInput).trim();
     if (!trimmed || isSendingChat) return;
 
+    const previousHistory = chatMessages;
     setChatMessages((prev) => [...prev, { id: `u-${Date.now()}`, sender: "user", text: trimmed }]);
     if (overrideText === null) setChatInput("");
     setIsSendingChat(true);
     setAvatarState("thinking");
 
-    const reply = await askGeminiLecturer(trimmed, currentTopic, activeTab !== "materi" ? activeQuestion : null);
+    const { reply, languageStyle } = await askLecturerAI(
+      trimmed,
+      previousHistory,
+      currentTopic,
+      activeTab !== "materi" ? activeQuestion : null
+    );
     setChatMessages((prev) => [...prev, { id: `d-${Date.now() + 1}`, sender: "dosen", text: reply }]);
     setIsSendingChat(false);
-    speakText(reply);
+    speakText(reply, languageStyle === "en" && voiceMode === "auto" ? "en-US" : null);
   };
 
   // Fixed Mic toggle with real stop()
@@ -1185,7 +1214,7 @@ export default function App() {
     try {
       const recognition = new RecognitionCtor();
       recognitionRef.current = recognition;
-      recognition.lang = "id-ID";
+      recognition.lang = voiceMode === "en-US" ? "en-US" : "id-ID";
       recognition.interimResults = false;
       recognition.onstart = () => setIsListeningMic(true);
       recognition.onresult = (event) => {
@@ -1303,6 +1332,12 @@ export default function App() {
     };
   }, [itpExam, itpFinished, itpAnswers]);
 
+  const activeItpSection = itpExam?.sections?.[itpSectionIdx] || null;
+  const activeItpQuestion = activeItpSection?.questions?.[itpQIndex] || null;
+  const answeredInItpSec = activeItpSection
+    ? activeItpSection.questions.filter((q) => Boolean(itpAnswers[q.id])).length
+    : 0;
+
   const badges = [
     { id: "b-rookie", title: "Grammar Rookie", desc: "Menjawab benar >= 3 soal", unlocked: correctAnswersCount >= 3 },
     { id: "b-trap", title: "Trap Master", desc: "Skor Speed Trap >= 60 pts", unlocked: gameHighScore >= 60 },
@@ -1373,10 +1408,10 @@ export default function App() {
               type="button"
               onClick={() => setShowDosenPanel((p) => !p)}
               className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-bold"
-              title={showDosenPanel ? "Mode Fokus Baca (Tutup Panel Dosen)" : "Tampilkan Panel AI Dosen"}
+              title={showDosenPanel ? `Mode Fokus Baca (Tutup ${LECTURER_NAME})` : `Tampilkan Panel ${LECTURER_NAME}`}
             >
               {showDosenPanel ? <PanelRightClose className="w-3.5 h-3.5" /> : <PanelRightOpen className="w-3.5 h-3.5" />}
-              <span>{showDosenPanel ? "Fokus Baca" : "Panel Dosen"}</span>
+              <span>{showDosenPanel ? "Fokus Baca" : LECTURER_NAME}</span>
             </button>
 
             <button
@@ -2016,7 +2051,7 @@ export default function App() {
                                 className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 hover:text-amber-800"
                               >
                                 <Lightbulb className="w-3.5 h-3.5" />
-                                <span>{showHint ? "Sembunyikan Petunjuk" : "Butuh Petunjuk Dosen?"}</span>
+                                <span>{showHint ? "Sembunyikan Petunjuk" : `Butuh Petunjuk ${LECTURER_NAME}?`}</span>
                               </button>
                               {showHint && (
                                 <div className="mt-1.5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
@@ -2476,219 +2511,207 @@ export default function App() {
                       </button>
                     </div>
                   </div>
-                ) : (
-                  (() => {
-                    const sec = itpExam.sections[itpSectionIdx];
-                    const currentQ = sec.questions[itpQIndex];
-                    const answeredInSec = sec.questions.filter((q) => Boolean(itpAnswers[q.id])).length;
-
-                    if (itpShowDirections) {
-                      return (
-                        <div className="p-6 rounded-2xl bg-slate-900 text-white space-y-4">
-                          <div className="flex items-center justify-between">
-                            <span className="px-3 py-1 rounded-full bg-amber-400 text-slate-950 text-xs font-black uppercase">
-                              {sec.name}
-                            </span>
-                            <span className="font-mono text-sm font-bold text-amber-300">
-                              Waktu: {Math.round(sec.durationSeconds / 60)} Menit • {sec.questions.length} Soal
-                            </span>
-                          </div>
-                          <h3 className="text-base sm:text-lg font-extrabold">Official Section Directions</h3>
-                          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">{sec.directions}</p>
-                          <div className="p-3 rounded-xl bg-white/10 text-xs text-amber-200">
-                            Perhatian: Seperti tes TOEFL ITP asli, setelah kamu lanjut ke seksi berikutnya, kamu tidak dapat kembali ke seksi sebelumnya. Tidak ada pengurangan nilai untuk jawaban salah.
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setItpShowDirections(false)}
-                            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs sm:text-sm"
-                          >
-                            <span>Mulai {sec.name}</span>
-                            <ArrowRight className="w-4 h-4" />
-                          </button>
+                ) : activeItpSection && itpShowDirections ? (
+                  <div className="p-6 rounded-2xl bg-slate-900 text-white space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="px-3 py-1 rounded-full bg-amber-400 text-slate-950 text-xs font-black uppercase">
+                        {activeItpSection.name}
+                      </span>
+                      <span className="font-mono text-sm font-bold text-amber-300">
+                        Waktu: {Math.round(activeItpSection.durationSeconds / 60)} Menit • {activeItpSection.questions.length} Soal
+                      </span>
+                    </div>
+                    <h3 className="text-base sm:text-lg font-extrabold">Official Section Directions</h3>
+                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">{activeItpSection.directions}</p>
+                    <div className="p-3 rounded-xl bg-white/10 text-xs text-amber-200">
+                      Perhatian: Seperti tes TOEFL ITP asli, setelah kamu lanjut ke seksi berikutnya, kamu tidak dapat kembali ke seksi sebelumnya. Tidak ada pengurangan nilai untuk jawaban salah.
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setItpShowDirections(false)}
+                      className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs sm:text-sm"
+                    >
+                      <span>Mulai {activeItpSection.name}</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : activeItpSection && activeItpQuestion ? (
+                  <div className="space-y-4">
+                    {/* TOP EXAM BAR */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-200">
+                      <div>
+                        <span className="text-[11px] font-black uppercase text-[#1E3A8A]">{activeItpSection.name}</span>
+                        <div className="text-xs text-slate-500">
+                          Soal {itpQIndex + 1} / {activeItpSection.questions.length} • Terjawab: {answeredInItpSec}/{activeItpSection.questions.length}
                         </div>
-                      );
-                    }
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-3 py-1.5 rounded-xl font-mono text-sm font-black border ${
+                            itpSecondsLeft < 120
+                              ? "bg-rose-600 text-white border-rose-700 animate-pulse"
+                              : "bg-slate-900 text-amber-300 border-slate-800"
+                          }`}
+                        >
+                          {formatTimer(itpSecondsLeft)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleAdvanceItpSection}
+                          className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold"
+                        >
+                          {itpSectionIdx < 2 ? "Selesai Seksi →" : "Kumpulkan Ujian"}
+                        </button>
+                      </div>
+                    </div>
 
-                    return (
-                      <div className="space-y-4">
-                        {/* TOP EXAM BAR */}
-                        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-200">
-                          <div>
-                            <span className="text-[11px] font-black uppercase text-[#1E3A8A]">{sec.name}</span>
-                            <div className="text-xs text-slate-500">
-                              Soal {itpQIndex + 1} / {sec.questions.length} • Terjawab: {answeredInSec}/{sec.questions.length}
-                            </div>
+                    {/* READING SPLIT-SCREEN OR STANDARD LAYOUT */}
+                    <div className={activeItpSection.id === 3 ? "grid grid-cols-1 xl:grid-cols-12 gap-4 items-start" : ""}>
+                      {activeItpSection.id === 3 && activeItpQuestion.passageLines && (
+                        <div className="xl:col-span-6 p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 max-h-[420px] overflow-y-auto">
+                          <div className="text-[11px] font-extrabold uppercase text-emerald-700">
+                            Passage {(activeItpQuestion.passageIndex || 0) + 1}: {activeItpQuestion.passageTitle}
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`px-3 py-1.5 rounded-xl font-mono text-sm font-black border ${
-                                itpSecondsLeft < 120
-                                  ? "bg-rose-600 text-white border-rose-700 animate-pulse"
-                                  : "bg-slate-900 text-amber-300 border-slate-800"
-                              }`}
-                            >
-                              {formatTimer(itpSecondsLeft)}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={handleAdvanceItpSection}
-                              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold"
-                            >
-                              {itpSectionIdx < 2 ? "Selesai Seksi →" : "Kumpulkan Ujian"}
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* READING SPLIT-SCREEN OR STANDARD LAYOUT */}
-                        <div className={sec.id === 3 ? "grid grid-cols-1 xl:grid-cols-12 gap-4 items-start" : ""}>
-                          {sec.id === 3 && currentQ.passageLines && (
-                            <div className="xl:col-span-6 p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 max-h-[420px] overflow-y-auto">
-                              <div className="text-[11px] font-extrabold uppercase text-emerald-700">
-                                Passage {(currentQ.passageIndex || 0) + 1}: {currentQ.passageTitle}
-                              </div>
-                              <div className="space-y-2 text-xs sm:text-sm leading-relaxed text-slate-800 font-serif">
-                                {currentQ.passageLines.map((line, idx) => (
-                                  <div key={idx} className="flex gap-2">
-                                    <span className="font-mono text-[10px] font-bold text-slate-400 pt-0.5">
-                                      {String(idx + 1).padStart(2, "0")}
-                                    </span>
-                                    <p>{line}</p>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          <div className={`${sec.id === 3 ? "xl:col-span-6" : ""} space-y-4`}>
-                            {sec.id === 1 && (
-                              <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-2">
-                                <div className="flex items-center justify-between text-xs">
-                                  <span className="font-extrabold text-amber-300">
-                                    {currentQ.part} {currentQ.groupTitle ? `• ${currentQ.groupTitle}` : ""}
-                                  </span>
-                                  <span className="text-[10px] text-slate-400">Real ITP: Audio 1x Putar</span>
-                                </div>
-                                <button
-                                  type="button"
-                                  disabled={Boolean(playedAudioIds[`itp-${currentQ.groupTitle || currentQ.id}`])}
-                                  onClick={() =>
-                                    handlePlayAudio(
-                                      `itp-${currentQ.groupTitle || currentQ.id}`,
-                                      currentQ.audioScript || currentQ.prompt,
-                                      true,
-                                      0.94
-                                    )
-                                  }
-                                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-extrabold ${
-                                    playedAudioIds[`itp-${currentQ.groupTitle || currentQ.id}`]
-                                      ? "bg-slate-700 text-slate-400 cursor-not-allowed"
-                                      : "bg-blue-600 hover:bg-blue-500 text-white"
-                                  }`}
-                                >
-                                  <Headphones className="w-4 h-4" />
-                                  <span>
-                                    {playedAudioIds[`itp-${currentQ.groupTitle || currentQ.id}`]
-                                      ? "Audio Sudah Diputar (1/1)"
-                                      : "Putar Audio Rekaman (1x)"}
-                                  </span>
-                                </button>
-                              </div>
-                            )}
-
-                            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                              <div className="flex items-center justify-between text-xs">
-                                <span className="font-extrabold text-[#1E3A8A]">
-                                  No. {itpQIndex + 1} {currentQ.part ? `• ${currentQ.part}` : ""}
+                          <div className="space-y-2 text-xs sm:text-sm leading-relaxed text-slate-800 font-serif">
+                            {activeItpQuestion.passageLines.map((line, idx) => (
+                              <div key={idx} className="flex gap-2">
+                                <span className="font-mono text-[10px] font-bold text-slate-400 pt-0.5">
+                                  {String(idx + 1).padStart(2, "0")}
                                 </span>
+                                <p>{line}</p>
                               </div>
-                              <p className="text-sm sm:text-base font-bold text-slate-900">{currentQ.prompt}</p>
-                              <div className="space-y-2">
-                                {currentQ.options.map((opt) => {
-                                  const picked = itpAnswers[currentQ.id] === opt.key;
-                                  return (
-                                    <button
-                                      key={opt.key}
-                                      type="button"
-                                      onClick={() =>
-                                        setItpAnswers((prev) => ({ ...prev, [currentQ.id]: opt.key }))
-                                      }
-                                      className={`w-full text-left p-3 rounded-xl border text-xs sm:text-sm flex items-center gap-3 transition ${
-                                        picked
-                                          ? "bg-blue-50 border-[#1E3A8A] text-[#1E3A8A] font-bold ring-1 ring-[#1E3A8A]"
-                                          : "bg-white border-slate-200 hover:border-blue-300 text-slate-800"
-                                      }`}
-                                    >
-                                      <span
-                                        className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs shrink-0 ${
-                                          picked ? "bg-[#1E3A8A] text-white" : "bg-slate-100 text-slate-700 border border-slate-300"
-                                        }`}
-                                      >
-                                        {opt.key}
-                                      </span>
-                                      <span>{opt.text}</span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                              <button
-                                type="button"
-                                disabled={itpQIndex === 0}
-                                onClick={() => setItpQIndex((i) => Math.max(0, i - 1))}
-                                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 disabled:opacity-40"
-                              >
-                                ← Sebelumnya
-                              </button>
-                              {itpQIndex < sec.questions.length - 1 ? (
-                                <button
-                                  type="button"
-                                  onClick={() => setItpQIndex((i) => i + 1)}
-                                  className="px-4 py-2 rounded-xl bg-[#1E3A8A] text-white text-xs font-extrabold"
-                                >
-                                  Berikutnya →
-                                </button>
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={handleAdvanceItpSection}
-                                  className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-extrabold"
-                                >
-                                  {itpSectionIdx < 2 ? "Lanjut ke Seksi Berikutnya →" : "Selesai & Lihat Skor ITP"}
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* COMPACT QUESTION NAVIGATOR */}
-                        <div className="pt-3 border-t border-slate-100">
-                          <div className="text-[11px] font-bold text-slate-500 mb-2">Navigasi Nomor Seksi Ini:</div>
-                          <div className="flex flex-wrap gap-1.5">
-                            {sec.questions.map((q, idx) => (
-                              <button
-                                key={q.id}
-                                type="button"
-                                onClick={() => setItpQIndex(idx)}
-                                className={`w-7 h-7 rounded-lg text-[11px] font-extrabold border ${
-                                  idx === itpQIndex
-                                    ? "bg-[#1E3A8A] text-white border-[#1E3A8A]"
-                                    : itpAnswers[q.id]
-                                    ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                                    : "bg-slate-50 text-slate-600 border-slate-200"
-                                }`}
-                              >
-                                {idx + 1}
-                              </button>
                             ))}
                           </div>
                         </div>
+                      )}
+
+                      <div className={`${activeItpSection.id === 3 ? "xl:col-span-6" : ""} space-y-4`}>
+                        {activeItpSection.id === 1 && (
+                          <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-2">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-extrabold text-amber-300">
+                                {activeItpQuestion.part} {activeItpQuestion.groupTitle ? `• ${activeItpQuestion.groupTitle}` : ""}
+                              </span>
+                              <span className="text-[10px] text-slate-400">Real ITP: Audio 1x Putar</span>
+                            </div>
+                            <button
+                              type="button"
+                              disabled={Boolean(playedAudioIds[`itp-${activeItpQuestion.groupTitle || activeItpQuestion.id}`])}
+                              onClick={() =>
+                                handlePlayAudio(
+                                  `itp-${activeItpQuestion.groupTitle || activeItpQuestion.id}`,
+                                  activeItpQuestion.audioScript || activeItpQuestion.prompt,
+                                  true,
+                                  0.94
+                                )
+                              }
+                              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-extrabold ${
+                                playedAudioIds[`itp-${activeItpQuestion.groupTitle || activeItpQuestion.id}`]
+                                  ? "bg-slate-700 text-slate-400 cursor-not-allowed"
+                                  : "bg-blue-600 hover:bg-blue-500 text-white"
+                              }`}
+                            >
+                              <Headphones className="w-4 h-4" />
+                              <span>
+                                {playedAudioIds[`itp-${activeItpQuestion.groupTitle || activeItpQuestion.id}`]
+                                  ? "Audio Sudah Diputar (1/1)"
+                                  : "Putar Audio Rekaman (1x)"}
+                              </span>
+                            </button>
+                          </div>
+                        )}
+
+                        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-extrabold text-[#1E3A8A]">
+                              No. {itpQIndex + 1} {activeItpQuestion.part ? `• ${activeItpQuestion.part}` : ""}
+                            </span>
+                          </div>
+                          <p className="text-sm sm:text-base font-bold text-slate-900">{activeItpQuestion.prompt}</p>
+                          <div className="space-y-2">
+                            {activeItpQuestion.options.map((opt) => {
+                              const picked = itpAnswers[activeItpQuestion.id] === opt.key;
+                              return (
+                                <button
+                                  key={opt.key}
+                                  type="button"
+                                  onClick={() =>
+                                    setItpAnswers((prev) => ({ ...prev, [activeItpQuestion.id]: opt.key }))
+                                  }
+                                  className={`w-full text-left p-3 rounded-xl border text-xs sm:text-sm flex items-center gap-3 transition ${
+                                    picked
+                                      ? "bg-blue-50 border-[#1E3A8A] text-[#1E3A8A] font-bold ring-1 ring-[#1E3A8A]"
+                                      : "bg-white border-slate-200 hover:border-blue-300 text-slate-800"
+                                  }`}
+                                >
+                                  <span
+                                    className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs shrink-0 ${
+                                      picked ? "bg-[#1E3A8A] text-white" : "bg-slate-100 text-slate-700 border border-slate-300"
+                                    }`}
+                                  >
+                                    {opt.key}
+                                  </span>
+                                  <span>{opt.text}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <button
+                            type="button"
+                            disabled={itpQIndex === 0}
+                            onClick={() => setItpQIndex((i) => Math.max(0, i - 1))}
+                            className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 disabled:opacity-40"
+                          >
+                            ← Sebelumnya
+                          </button>
+                          {itpQIndex < activeItpSection.questions.length - 1 ? (
+                            <button
+                              type="button"
+                              onClick={() => setItpQIndex((i) => i + 1)}
+                              className="px-4 py-2 rounded-xl bg-[#1E3A8A] text-white text-xs font-extrabold"
+                            >
+                              Berikutnya →
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={handleAdvanceItpSection}
+                              className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-extrabold"
+                            >
+                              {itpSectionIdx < 2 ? "Lanjut ke Seksi Berikutnya →" : "Selesai & Lihat Skor ITP"}
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    );
-                  })()
-                )}
+                    </div>
+
+                    {/* COMPACT QUESTION NAVIGATOR */}
+                    <div className="pt-3 border-t border-slate-100">
+                      <div className="text-[11px] font-bold text-slate-500 mb-2">Navigasi Nomor Seksi Ini:</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {activeItpSection.questions.map((q, idx) => (
+                          <button
+                            key={q.id}
+                            type="button"
+                            onClick={() => setItpQIndex(idx)}
+                            className={`w-7 h-7 rounded-lg text-[11px] font-extrabold border ${
+                              idx === itpQIndex
+                                ? "bg-[#1E3A8A] text-white border-[#1E3A8A]"
+                                : itpAnswers[q.id]
+                                ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                : "bg-slate-50 text-slate-600 border-slate-200"
+                            }`}
+                          >
+                            {idx + 1}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             )}
 
@@ -3140,14 +3163,14 @@ export default function App() {
             )}
           </div>
 
-          {/* RIGHT WORKSPACE: AI DOSEN PROF. ARYA (COLLAPSIBLE ON DESKTOP) */}
+          {/* RIGHT WORKSPACE: LECTURER TOEFL AI (COLLAPSIBLE ON DESKTOP) */}
           {showDosenPanel && (
             <aside className="lg:col-span-4 space-y-4 sm:space-y-5 lg:sticky lg:top-32">
               <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-amber-500" />
-                    <span className="text-xs font-extrabold uppercase tracking-wider text-slate-800">AI Dosen Pembimbing</span>
+                    <span className="text-xs font-extrabold uppercase tracking-wider text-slate-800">{LECTURER_NAME}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <button
@@ -3211,8 +3234,8 @@ export default function App() {
                 <div className="flex flex-col items-center text-center pt-1">
                   <LecturerAvatar state={avatarState} isMuted={isMuted} activeLang={activeVoiceLang} />
                   <div className="mt-3">
-                    <h3 className="text-sm font-extrabold text-slate-900">Prof. Arya Pratama, M.Ed.</h3>
-                    <p className="text-[11px] text-slate-500">Penutur Bilingual Otomatis (ID &amp; EN)</p>
+                    <h3 className="text-sm font-extrabold text-slate-900">{LECTURER_NAME}</h3>
+                    <p className="text-[11px] text-slate-500">Mentor TOEFL ITP • Auto ID ↔ EN</p>
                   </div>
                 </div>
 
@@ -3259,14 +3282,14 @@ export default function App() {
               <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
                 <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center gap-2">
                   <MessageSquare className="w-4 h-4 text-[#1E3A8A]" />
-                  <span className="text-xs font-extrabold text-slate-800">Tanya Dosen (ID / EN Otomatis)</span>
+                  <span className="text-xs font-extrabold text-slate-800">Chat {LECTURER_NAME} (Auto ID ↔ EN)</span>
                 </div>
 
-                <div className="p-3.5 h-48 overflow-y-auto space-y-2.5 bg-white">
+                <div className="p-3.5 h-56 overflow-y-auto space-y-2.5 bg-white">
                   {chatMessages.map((msg) => (
                     <div key={msg.id} className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"}`}>
                       <div
-                        className={`max-w-[88%] px-3 py-2 rounded-2xl text-xs leading-relaxed ${
+                        className={`max-w-[88%] px-3 py-2 rounded-2xl text-xs leading-relaxed whitespace-pre-line ${
                           msg.sender === "user"
                             ? "bg-[#1E3A8A] text-white rounded-br-sm"
                             : "bg-slate-100 text-slate-800 border border-slate-200 rounded-bl-sm"
@@ -3276,7 +3299,7 @@ export default function App() {
                       </div>
                     </div>
                   ))}
-                  {isSendingChat && <div className="text-[11px] text-slate-400 italic">Prof. Arya sedang menyusun penjelasan...</div>}
+                  {isSendingChat && <div className="text-[11px] text-slate-400 italic">{LECTURER_NAME} sedang menyiapkan penjelasan...</div>}
                   <div ref={chatEndRef} />
                 </div>
 
@@ -3294,7 +3317,7 @@ export default function App() {
                     type="text"
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
-                    placeholder="Tanya Gerund, Passive, Inversion..."
+                    placeholder="Tanya grammar, reading, listening (ID / EN)..."
                     className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs text-slate-800 focus:outline-none focus:border-[#1E3A8A]"
                   />
                   <button type="submit" disabled={!chatInput.trim() || isSendingChat} className="p-2 rounded-xl bg-[#1E3A8A] hover:bg-blue-900 disabled:opacity-40 text-white shrink-0">

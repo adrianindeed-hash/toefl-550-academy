@@ -5,7 +5,7 @@
 [![React](https://img.shields.io/badge/React-18+-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-**TOEFL 550 Academy** adalah aplikasi web persiapan **TOEFL ITP Level 1** interaktif yang dirancang untuk membantu pengguna menembus skor **550+**. Dilengkapi dengan **18 Modul Silabus Terstruktur**, **1.000+ Bank Soal**, **Simulasi Real TOEFL ITP (140 Soal • 115 Menit)**, **Lab Listening**, **Arena Mini-Games**, serta **AI Dosen Pembimbing Bilingual (ID ↔ EN)**.
+**TOEFL 550 Academy** adalah aplikasi web persiapan **TOEFL ITP Level 1** interaktif yang dirancang untuk membantu pengguna menembus skor **550+**. Dilengkapi dengan **18 Modul Silabus Terstruktur**, **1.000+ Bank Soal**, **Simulasi Real TOEFL ITP (140 Soal • 115 Menit)**, **Lab Listening**, **Arena Mini-Games**, serta **Lecturer TOEFL AI (Auto Code-Switching ID ↔ EN)**.
 
 🔗 **Coba langsung di sini:** [https://toefl-550-academy.vercel.app](https://toefl-550-academy.vercel.app)
 
@@ -17,7 +17,7 @@
 Materi disusun bertahap dari dasar hingga jebakan skor 550+ dengan filter *Structure*, *Listening*, dan *Reading*:
 * **Latihan "Coret & Sorot" Interaktif:** Pengguna dapat mengklik frasa jebakan (*Prepositional Phrase*, *Appositive*, *Negative Inversion Trigger*) agar langsung tercoret dan melihat warna *True Subject* serta *Main Verb*.
 * **Kotak Jebakan Umum (❌ Salah vs. ✅ Benar):** Perbandingan langsung kesalahan klasik TOEFL beserta alasan singkatnya.
-* **Latihan Soal Per Topik (5 atau 10 Soal):** Fokus pada skill modul terkait, lengkap dengan bedah semua opsi pengecoh (A–D) dan tombol *"Tantang Dosen"*.
+* **Latihan Soal Per Topik (5 atau 10 Soal):** Fokus pada skill modul terkait, lengkap dengan bedah semua opsi pengecoh (A–D) dan tombol tanya opsi salah ke *Lecturer TOEFL AI*.
 * **Split-Screen Reading + Sorot Bukti:** Teks bacaan akademik bernomor baris tampil di sisi kiri dan soal di sisi kanan, dilengkapi tombol **Sorot Bukti di Teks**.
 
 ### 2. 🎯 Mini Diagnostic Test (9 Soal)
@@ -36,11 +36,12 @@ Menyerupai format, urutan seksi, aturan, dan konversi skor TOEFL ITP asli:
 * Pengatur kecepatan audio (`0.85x`, `1.0x`, `1.15x`) berbasis Web Speech API.
 * Pilihan **Mode Latihan (Bisa Ulang Audio)** vs **Mode Ujian Asli (1x Putar)** serta tombol buka-tutup transkrip.
 
-### 5. 👨‍🏫 AI Dosen Pembimbing (Prof. Arya Pratama, M.Ed.)
+### 5. 👨‍🏫 Lecturer TOEFL AI (Mentor Virtual Bilingual)
 * **Avatar SVG Animasi** dengan status visual (*Siap Mengajar, Berbicara, Menganalisis, Hebat*).
+* **Humanizer & Natural Code-Switching (ID ↔ EN):** Menyesuaikan bahasa secara otomatis — full English jika user bertanya dalam bahasa Inggris, atau campuran Indonesia–Inggris yang luwes dengan istilah TOEFL akurat jika user bertanya bilingual/Indonesia.
 * **Penutur Bilingual Otomatis (ID ↔ EN)** dan *Live Subtitle*.
-* **Tanya Dosen via Teks & Suara (Mic):** Mendukung integrasi **Gemini API** (opsional) dengan *smart offline fallback* agar tetap responsif tanpa API Key.
-* **Mode Fokus Baca:** Panel AI Dosen dapat dibuka-tutup di desktop agar ruang baca materi lebih lega.
+* **Tanya Lecturer TOEFL AI via Teks & Suara (Mic):** Didukung server API route (`/api/lecturer`) terintegrasi **Gemini API** (opsional) dengan *smart bilingual offline fallback* agar tetap responsif tanpa API Key.
+* **Mode Fokus Baca:** Panel Lecturer TOEFL AI dapat dibuka-tutup di desktop agar ruang baca materi lebih lega.
 
 ### 6. 🎮 Arena Mini-Games, Error Log, Flashcards & AWL 550+
 * **Speed Trap Hunter (60 Detik)** & **Context Vocab Duel (Combo Streak)** + Lencana Pencapaian (*Badges*).
@@ -66,11 +67,16 @@ Menyerupai format, urutan seksi, aturan, dan konversi skor TOEFL ITP asli:
 toefl-550-academy/
 ├── public/                 # Aset statis & ikon PWA
 ├── src/
-│   └── app/
-│       ├── layout.js       # Root layout & metadata Next.js
-│       ├── globals.css     # Konfigurasi Tailwind CSS
-│       ├── page.js         # UI utama, state, simulasi ITP, voice engine & AI Dosen
-│       └── toeflData.js    # 18 Modul kurikulum, 1.000+ bank soal, AWL & konversi skor ITP
+│   ├── app/
+│   │   ├── api/
+│   │   │   └── lecturer/
+│   │   │       └── route.js # API Route Lecturer TOEFL AI (Gemini + Fallback)
+│   │   ├── layout.js       # Root layout & metadata Next.js
+│   │   ├── globals.css     # Konfigurasi Tailwind CSS
+│   │   ├── page.js         # UI utama, state, simulasi ITP, voice engine & Lecturer TOEFL AI
+│   │   └── toeflData.js    # 18 Modul kurikulum, 1.000+ bank soal, AWL & konversi skor ITP
+│   └── lib/
+│       └── lecturerAI.js   # System prompt, deteksi bahasa/code-switching & fallback engine
 ├── package.json
 └── README.md
 ```
@@ -90,11 +96,12 @@ toefl-550-academy/
    npm install
    ```
 
-3. **(Opsional) Aktifkan AI Dosen dengan Gemini API:**
-   Buat file `.env.local` di root proyek lalu tambahkan API Key kamu. *(Jika dilewati, aplikasi tetap berjalan lancar menggunakan mesin jawaban offline bawaan).*
+3. **(Opsional) Aktifkan Lecturer TOEFL AI dengan Gemini API:**
+   Buat file `.env.local` di root proyek lalu tambahkan API Key kamu. *(Jika dilewati, aplikasi tetap berjalan lancar menggunakan mesin jawaban bilingual offline bawaan).*
    ```env
-   NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_api_key_here
+   GEMINI_API_KEY=your_gemini_api_key_here
    ```
+   *(Catatan: `NEXT_PUBLIC_GEMINI_API_KEY` juga tetap didukung untuk kompatibilitas backward).*
 
 4. **Jalankan server pengembangan:**
    ```bash
@@ -106,7 +113,7 @@ toefl-550-academy/
 
 ## ☁️ Deployment
 
-Proyek ini di-deploy otomatis menggunakan **Vercel** setiap kali ada *push* ke branch `main`. Jika ingin menambahkan `NEXT_PUBLIC_GEMINI_API_KEY`, cukup masukkan di menu **Project Settings → Environment Variables** di dashboard Vercel.
+Proyek ini di-deploy otomatis menggunakan **Vercel** setiap kali ada *push* ke branch `main`. Jika ingin menambahkan `GEMINI_API_KEY`, cukup masukkan di menu **Project Settings → Environment Variables** di dashboard Vercel.
 
 ---
 
