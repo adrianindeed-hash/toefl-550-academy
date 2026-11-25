@@ -11,7 +11,7 @@ export const CURRICULUM = [
     id: "basic-struct-sv",
     level: "Basic",
     levelNum: 1,
-    section: "Structure",a
+    section: "Structure",
     code: "S-1.1",
     moduleRef: "Structure Skill 1-3",
     title: "Subject-Verb Agreement, Prepositional Phrases & Appositives",
