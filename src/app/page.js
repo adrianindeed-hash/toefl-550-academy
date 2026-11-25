@@ -1532,6 +1532,640 @@ export default function App() {
             )}
 
             {/* ================================================================
+                MODE 1: SILABUS 18 MODUL LENGKAP & LATIHAN 5 / 10 SOAL PER TOPIK
+               ================================================================ */}
+            {appMode === "curriculum" && (
+              <>
+                <div className="bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-4 shadow-xs space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {levels.map((lvl) => (
+                        <button
+                          key={lvl}
+                          type="button"
+                          onClick={() => handleSelectLevel(lvl)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
+                            selectedLevel === lvl
+                              ? "bg-[#1E3A8A] text-white shadow-xs"
+                              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                          }`}
+                        >
+                          {lvl === "Basic"
+                            ? "1. Basic (8 Modul)"
+                            : lvl === "Intermediate"
+                            ? "2. Intermediate (6 Modul)"
+                            : "3. Advance 550+ (4 Modul)"}
+                        </button>
+                      ))}
+                    </div>
+
+                    <span className="text-[11px] font-bold text-slate-500">
+                      {correctAnswersCount}/{totalQuestionsCount}+ Total Bank Soal
+                    </span>
+                  </div>
+
+                  {/* Section Filter */}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
+                    <span className="text-[11px] font-extrabold text-slate-400 uppercase mr-1">
+                      Filter Section:
+                    </span>
+                    {sections.map((sec) => (
+                      <button
+                        key={sec}
+                        type="button"
+                        onClick={() => handleSelectSection(sec)}
+                        className={`px-3 py-1 rounded-lg text-xs font-extrabold border transition-all ${
+                          selectedSection === sec
+                            ? "bg-amber-400 text-slate-950 border-amber-500 shadow-2xs"
+                            : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                        }`}
+                      >
+                        {sec === "All"
+                          ? `Semua (${CURRICULUM.filter((t) => t.level === selectedLevel).length} Modul)`
+                          : sec}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Module Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {topicsInCurrentLevel.map((topic) => {
+                      const isActive = topic.id === selectedTopicId;
+                      const isDone = Boolean(completedTopics[topic.id]);
+                      const secBadgeColor =
+                        topic.section === "Listening"
+                          ? "bg-indigo-100 text-indigo-800 border-indigo-200"
+                          : topic.section === "Structure"
+                          ? "bg-blue-100 text-[#1E3A8A] border-blue-200"
+                          : "bg-emerald-100 text-emerald-800 border-emerald-200";
+                      return (
+                        <div
+                          key={topic.id}
+                          onClick={() => handleSelectTopic(topic.id, "materi")}
+                          className={`cursor-pointer text-left p-3 rounded-xl border transition-all flex flex-col justify-between gap-2 ${
+                            isActive
+                              ? "bg-blue-50/90 border-[#1E3A8A] ring-2 ring-[#1E3A8A]/15"
+                              : "bg-white border-slate-200 hover:border-slate-300"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-1">
+                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${secBadgeColor}`}>
+                              {topic.section} • {topic.code}
+                            </span>
+                            <div className="flex items-center gap-1.5">
+                              {isDone && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSelectTopic(topic.id, "contoh");
+                                }}
+                                className="px-2 py-0.5 rounded-md bg-amber-100 hover:bg-amber-200 text-amber-950 border border-amber-300 text-[10px] font-extrabold"
+                              >
+                                Latihan Topik
+                              </button>
+                            </div>
+                          </div>
+                          <div>
+                            <div className={`text-xs font-extrabold leading-snug ${isActive ? "text-[#1E3A8A]" : "text-slate-900"}`}>
+                              {topic.shortTitle}
+                            </div>
+                            <div className="text-[10px] text-slate-500 mt-0.5">{topic.moduleRef}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Active Topic Header & 2 Clean Tabs */}
+                <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-300">
+                      {currentTopic.moduleRef}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-500">{currentTopic.category}</span>
+                  </div>
+                  <h2 className="text-base sm:text-xl font-extrabold text-slate-900">
+                    Topik {currentTopic.code}: {currentTopic.title}
+                  </h2>
+
+                  <div className="mt-4 grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        stopSpeaking();
+                        setActiveTab("materi");
+                      }}
+                      className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-xs font-extrabold transition-all ${
+                        activeTab === "materi" ? "bg-white text-[#1E3A8A] shadow-xs" : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <BookOpen className="w-3.5 h-3.5 shrink-0" />
+                      <span>1. Materi, Rumus &amp; Jebakan</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        stopSpeaking();
+                        setActiveTab("contoh");
+                        setTopicExampleIndex(0);
+                        setHighlightedLine(null);
+                        setShowHint(false);
+                      }}
+                      className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-xs font-extrabold transition-all ${
+                        activeTab === "contoh" ? "bg-amber-400 text-slate-950 shadow-xs" : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <ListChecks className="w-3.5 h-3.5 shrink-0" />
+                      <span>2. Latihan Soal Topik ({activeTopicQuestions.length})</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* TAB 1: MATERI, RUMUS, CORET & SOROT, JEBAKAN UMUM */}
+                {activeTab === "materi" && (
+                  <div className="space-y-4">
+                    {currentTopic.passage && (
+                      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs space-y-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                          <div className="flex items-center gap-2">
+                            <Layers className="w-4 h-4 text-[#1E3A8A]" />
+                            <h3 className="font-extrabold text-sm sm:text-base text-slate-900">
+                              {currentTopic.passage.title}
+                            </h3>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => speakText(currentTopic.passage.text, "en-US", 0.92)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-[#1E3A8A] hover:bg-blue-100 border border-blue-200"
+                          >
+                            <Volume2 className="w-3.5 h-3.5" />
+                            <span>Baca Teks Inggris</span>
+                          </button>
+                        </div>
+
+                        <div className="text-sm leading-relaxed text-slate-800 space-y-2.5 font-serif bg-slate-50/70 p-4 rounded-xl border border-slate-200/80">
+                          {currentTopic.passage.lines
+                            ? currentTopic.passage.lines.map((line, i) => (
+                                <div key={i} className="flex gap-2.5">
+                                  <span className="font-mono text-[11px] font-bold text-slate-400 pt-0.5 select-none">
+                                    {String(i + 1).padStart(2, "0")}
+                                  </span>
+                                  <p>{line}</p>
+                                </div>
+                              ))
+                            : currentTopic.passage.text.split("\n\n").map((para, i) => <p key={i}>{para}</p>)}
+                        </div>
+
+                        {showTranslations && currentTopic.passage.translationId && (
+                          <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 text-xs sm:text-sm text-slate-700 space-y-1">
+                            <div className="font-bold text-amber-900 text-xs uppercase tracking-wider">
+                              Terjemahan Pendamping (ID):
+                            </div>
+                            <p className="leading-relaxed">{currentTopic.passage.translationId}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {currentTopic.paragraphs.map((para) => (
+                      <div key={para.id} className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs space-y-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <h3 className="text-sm sm:text-base font-extrabold text-slate-900">{para.heading}</h3>
+                          <button
+                            type="button"
+                            onClick={() => speakText(para.voiceText)}
+                            className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-[#1E3A8A] hover:bg-blue-100 border border-blue-200"
+                          >
+                            <Volume2 className="w-3.5 h-3.5" />
+                            <span>Jelaskan</span>
+                          </button>
+                        </div>
+
+                        <p className="text-xs sm:text-sm leading-relaxed text-slate-700">{para.bodyId}</p>
+
+                        <div className="bg-slate-900 text-amber-300 font-mono text-xs px-3.5 py-2.5 rounded-xl overflow-x-auto">
+                          {para.englishRule}
+                        </div>
+
+                        {para.interactiveSentence && (
+                          <InteractiveSentenceBreakdown
+                            data={para.interactiveSentence}
+                            showTranslation={showTranslations}
+                          />
+                        )}
+
+                        <div className="space-y-2 pt-1">
+                          {para.examples.map((ex, idx) => (
+                            <div key={idx} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/90 space-y-1.5">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="text-xs sm:text-sm font-semibold text-slate-900 italic">“{ex.en}”</p>
+                                <button
+                                  type="button"
+                                  onClick={() => speakText(ex.en, "en-US", 0.9)}
+                                  className="shrink-0 p-1.5 rounded-lg text-slate-500 hover:text-[#1E3A8A] hover:bg-white border border-transparent hover:border-slate-200"
+                                >
+                                  <Volume2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                              {showTranslations && (
+                                <p className="text-xs text-slate-600">
+                                  <span className="font-semibold text-slate-700">Arti: </span>
+                                  {ex.id}
+                                </p>
+                              )}
+                              <span className="inline-block px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                                {ex.highlight}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+
+                    {currentTopic.traps && currentTopic.traps.length > 0 && (
+                      <div className="bg-amber-50/70 rounded-2xl border border-amber-200 p-4 sm:p-5 space-y-3">
+                        <div className="flex items-center gap-2 text-amber-950 font-extrabold text-sm">
+                          <AlertTriangle className="w-4 h-4 text-amber-600" />
+                          <span>Jebakan Umum TOEFL (Salah vs. Benar)</span>
+                        </div>
+                        <div className="space-y-2.5">
+                          {currentTopic.traps.map((trap, i) => (
+                            <div key={i} className="bg-white rounded-xl border border-amber-100 p-3.5 space-y-2 shadow-2xs">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs">
+                                <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-100 text-rose-950">
+                                  <span className="block text-[10px] font-black uppercase text-rose-600 mb-0.5">
+                                    ❌ Salah (Jebakan)
+                                  </span>
+                                  {trap.wrong}
+                                </div>
+                                <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-950">
+                                  <span className="block text-[10px] font-black uppercase text-emerald-600 mb-0.5">
+                                    ✅ Benar
+                                  </span>
+                                  {trap.right}
+                                </div>
+                              </div>
+                              <p className="text-xs text-slate-600">
+                                <strong className="text-slate-800">Alasan: </strong>
+                                {trap.reason}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          stopSpeaking();
+                          setActiveTab("contoh");
+                          setTopicExampleIndex(0);
+                          setHighlightedLine(null);
+                          setShowHint(false);
+                        }}
+                        className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs sm:text-sm font-extrabold shadow-sm"
+                      >
+                        <ListChecks className="w-4 h-4" />
+                        <span>Mulai Latihan Soal Topik Ini ({activeTopicQuestions.length} Soal)</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 2: LATIHAN SOAL TOPIK (5 / 10 SOAL + SPLIT-SCREEN READING) */}
+                {activeTab === "contoh" && activeQuestion && (
+                  <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs space-y-5">
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="px-2.5 py-1 rounded-lg text-xs font-extrabold bg-amber-100 text-amber-950 border border-amber-300">
+                          Latihan {currentTopic.code}: {topicExampleIndex + 1} / {activeTopicQuestions.length}
+                        </span>
+                        <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700">
+                          {activeQuestion.skillTag}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {currentTopic.section !== "Reading" && (
+                          <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                            {[5, 10].map((lim) => (
+                              <button
+                                key={lim}
+                                type="button"
+                                onClick={() => {
+                                  setTopicPracticeLimit(lim);
+                                  setTopicExampleIndex(0);
+                                }}
+                                className={`px-2 py-1 rounded-md text-[11px] font-extrabold ${
+                                  topicPracticeLimit === lim ? "bg-[#1E3A8A] text-white" : "text-slate-600"
+                                }`}
+                              >
+                                {lim} Soal
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => toggleBookmark(activeQuestion.id)}
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${
+                            bookmarkedIds.includes(activeQuestion.id)
+                              ? "bg-amber-100 text-amber-900 border-amber-300"
+                              : "bg-slate-50 text-slate-600 border-slate-200"
+                          }`}
+                        >
+                          {bookmarkedIds.includes(activeQuestion.id) ? (
+                            <BookmarkCheck className="w-3.5 h-3.5 text-amber-700" />
+                          ) : (
+                            <Bookmark className="w-3.5 h-3.5" />
+                          )}
+                          <span>{bookmarkedIds.includes(activeQuestion.id) ? "Tersimpan" : "Simpan"}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Number Strip */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {activeTopicQuestions.map((q, idx) => {
+                        const ans = userAnswers[q.id];
+                        return (
+                          <button
+                            key={q.id}
+                            type="button"
+                            onClick={() => {
+                              stopSpeaking();
+                              setTopicExampleIndex(idx);
+                              setHighlightedLine(null);
+                              setShowHint(false);
+                            }}
+                            className={`w-8 h-8 rounded-lg text-xs font-extrabold border transition-all ${
+                              idx === topicExampleIndex
+                                ? "bg-[#1E3A8A] text-white border-[#1E3A8A]"
+                                : ans
+                                ? ans.isCorrect
+                                  ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                  : "bg-rose-100 text-rose-800 border-rose-300"
+                                : "bg-slate-50 text-slate-600 border-slate-200"
+                            }`}
+                          >
+                            {idx + 1}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Split-Screen for Reading, Full Width for Structure/Listening */}
+                    <div className={activePassageForSplitScreen ? "grid grid-cols-1 xl:grid-cols-12 gap-5 items-start" : ""}>
+                      {activePassageForSplitScreen && (
+                        <div className="xl:col-span-6 p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5 xl:sticky xl:top-28">
+                          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                            <span className="text-[11px] font-extrabold uppercase text-emerald-700">
+                              Teks Bacaan (Split-Screen)
+                            </span>
+                            {activeQuestion.evidenceLine !== undefined && (
+                              <button
+                                type="button"
+                                onClick={() => setHighlightedLine(activeQuestion.evidenceLine)}
+                                className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 hover:bg-amber-200"
+                              >
+                                <Lightbulb className="w-3 h-3" />
+                                <span>Sorot Bukti di Teks</span>
+                              </button>
+                            )}
+                          </div>
+                          <h4 className="font-extrabold text-sm text-slate-900">{activePassageForSplitScreen.title}</h4>
+                          <div className="space-y-2 text-xs sm:text-sm leading-relaxed text-slate-800 font-serif">
+                            {activePassageForSplitScreen.lines.map((line, lIdx) => (
+                              <div
+                                key={lIdx}
+                                className={`flex gap-2 p-1.5 rounded-lg transition-all ${
+                                  highlightedLine === lIdx
+                                    ? "bg-amber-200/80 ring-2 ring-amber-400 font-semibold text-slate-950"
+                                    : ""
+                                }`}
+                              >
+                                <span className="font-mono text-[10px] font-bold text-slate-400 pt-0.5 select-none">
+                                  {String(lIdx + 1).padStart(2, "0")}
+                                </span>
+                                <p>{line}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className={`${activePassageForSplitScreen ? "xl:col-span-6" : ""} space-y-4`}>
+                        {activeQuestion.section === "Listening" && (
+                          <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-2.5">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-extrabold text-amber-300">Audio Listening Latihan</span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handlePlayAudio(
+                                    activeQuestion.id,
+                                    activeQuestion.audioScript || activeQuestion.prompt,
+                                    false,
+                                    0.94
+                                  )
+                                }
+                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold"
+                              >
+                                <Headphones className="w-4 h-4" />
+                                <span>Putar Audio Dialog</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-sm sm:text-base font-bold text-slate-900 leading-relaxed">
+                              {activeQuestion.prompt}
+                            </p>
+                            {activeQuestion.section !== "Listening" && (
+                              <button
+                                type="button"
+                                onClick={() => speakText(activeQuestion.prompt, "en-US", 0.92)}
+                                className="shrink-0 p-2 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-600 border border-slate-200"
+                              >
+                                <Volume2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+
+                          {showTranslations && activeQuestion.translationId && (
+                            <p className="text-xs text-slate-600 bg-amber-50/70 border border-amber-200/80 px-3 py-2 rounded-xl">
+                              <span className="font-bold text-amber-900">Terjemahan: </span>
+                              {activeQuestion.translationId}
+                            </p>
+                          )}
+
+                          {!userAnswers[activeQuestion.id] && activeQuestion.hintId && (
+                            <div>
+                              <button
+                                type="button"
+                                onClick={() => setShowHint((h) => !h)}
+                                className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 hover:text-amber-800"
+                              >
+                                <Lightbulb className="w-3.5 h-3.5" />
+                                <span>{showHint ? "Sembunyikan Petunjuk" : "Butuh Petunjuk Dosen?"}</span>
+                              </button>
+                              {showHint && (
+                                <div className="mt-1.5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
+                                  {activeQuestion.hintId}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Options */}
+                        <div className="space-y-2">
+                          {activeQuestion.options.map((opt) => {
+                            const userAns = userAnswers[activeQuestion.id];
+                            const isAnswered = Boolean(userAns);
+                            const isSelected = userAns?.selectedKey === opt.key;
+                            const isCorrectOpt = opt.key === activeQuestion.correctKey;
+
+                            let cardClass = "bg-white border-slate-200 hover:border-[#1E3A8A] hover:bg-blue-50/40 text-slate-800";
+                            if (isAnswered) {
+                              if (isCorrectOpt) cardClass = "bg-emerald-50 border-emerald-500 text-emerald-950 ring-2 ring-emerald-500/20";
+                              else if (isSelected) cardClass = "bg-rose-50 border-rose-400 text-rose-950";
+                              else cardClass = "bg-slate-50 border-slate-200 text-slate-400 opacity-75";
+                            }
+
+                            return (
+                              <button
+                                key={opt.key}
+                                type="button"
+                                disabled={isAnswered}
+                                onClick={() => handleAnswerSelect(opt.key)}
+                                className={`w-full text-left p-3.5 rounded-xl border transition-all flex items-center justify-between gap-3 ${cardClass}`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <span
+                                    className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-extrabold shrink-0 ${
+                                      isAnswered && isCorrectOpt
+                                        ? "bg-emerald-600 text-white"
+                                        : isAnswered && isSelected
+                                        ? "bg-rose-600 text-white"
+                                        : "bg-slate-100 text-slate-700 border border-slate-300"
+                                    }`}
+                                  >
+                                    {opt.key}
+                                  </span>
+                                  <span className="text-xs sm:text-sm font-semibold">{opt.text}</span>
+                                </div>
+                                {isAnswered && isCorrectOpt && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
+                                {isAnswered && isSelected && !isCorrectOpt && <XCircle className="w-5 h-5 text-rose-600 shrink-0" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Explanation Box */}
+                        {userAnswers[activeQuestion.id] && (
+                          <div className="rounded-2xl border border-slate-200 bg-slate-900 text-slate-100 p-4 space-y-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
+                              {userAnswers[activeQuestion.id].isCorrect ? (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-extrabold">
+                                  <CheckCircle2 className="w-4 h-4" /> Jawaban Benar!
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 text-xs font-extrabold">
+                                  <XCircle className="w-4 h-4" /> Kunci: {activeQuestion.correctKey} (Tersimpan ke Error Log)
+                                </span>
+                              )}
+
+                              <div className="flex items-center gap-2">
+                                {!userAnswers[activeQuestion.id].isCorrect && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleChallengeLecturer(userAnswers[activeQuestion.id].selectedKey)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-[11px] font-extrabold"
+                                  >
+                                    <HelpCircle className="w-3.5 h-3.5" />
+                                    <span>Kenapa bukan {userAnswers[activeQuestion.id].selectedKey}?</span>
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => speakText(activeQuestion.voiceWalkthrough)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold"
+                                >
+                                  <Volume2 className="w-3.5 h-3.5" />
+                                  <span>Suara</span>
+                                </button>
+                              </div>
+                            </div>
+
+                            {activeQuestion.optionAnalysis && (
+                              <div className="space-y-1.5 text-xs">
+                                {activeQuestion.options.map((opt) => (
+                                  <div
+                                    key={opt.key}
+                                    className={`p-2 rounded-xl border ${
+                                      opt.key === activeQuestion.correctKey
+                                        ? "bg-emerald-950/60 border-emerald-700/70 text-emerald-100"
+                                        : "bg-slate-800/50 border-slate-700/70 text-slate-300"
+                                    }`}
+                                  >
+                                    <span className="font-extrabold mr-1.5">{opt.key}.</span>
+                                    {activeQuestion.optionAnalysis[opt.key]}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Prev / Next */}
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                          <button
+                            type="button"
+                            disabled={topicExampleIndex === 0}
+                            onClick={() => {
+                              stopSpeaking();
+                              setTopicExampleIndex((i) => Math.max(0, i - 1));
+                              setHighlightedLine(null);
+                              setShowHint(false);
+                            }}
+                            className="inline-flex items-center gap-1 px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-200 text-slate-700 disabled:opacity-40"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                            <span>Sebelumnya</span>
+                          </button>
+                          <button
+                            type="button"
+                            disabled={topicExampleIndex >= activeTopicQuestions.length - 1}
+                            onClick={() => {
+                              stopSpeaking();
+                              setTopicExampleIndex((i) => Math.min(activeTopicQuestions.length - 1, i + 1));
+                              setHighlightedLine(null);
+                              setShowHint(false);
+                            }}
+                            className="inline-flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-extrabold bg-[#1E3A8A] text-white disabled:opacity-40"
+                          >
+                            <span>Soal Berikutnya</span>
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* ================================================================
                 MODE 2: MINI DIAGNOSTIC TEST (9 SOAL -> REKOMENDASI MODUL)
                ================================================================ */}
             {appMode === "diagnostic" && (
