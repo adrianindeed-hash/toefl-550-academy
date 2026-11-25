@@ -1278,6 +1278,11 @@ export default function App() {
     if (ok) {
       setListeningScore((s) => s + 1);
       speakText(`Benar sekali! ${item.explanation}`);
+    } else {
+      speakText(`Kurang tepat. ${item.explanation}`);
+    }
+  };
+
   const itpScoreReport = useMemo(() => {
     if (!itpExam || !itpFinished) return null;
     const s1 = itpExam.sections[0].questions;
@@ -1527,693 +1532,191 @@ export default function App() {
             )}
 
             {/* ================================================================
-                MODE 1: SILABUS 18 MODUL
+                MODE 2: MINI DIAGNOSTIC TEST (9 SOAL -> REKOMENDASI MODUL)
                ================================================================ */}
-            {appMode === "curriculum" && (
-              <>
-                <div className="bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-4 shadow-xs space-y-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {levels.map((lvl) => {
-                        const countInLvl = CURRICULUM.filter((t) => t.level === lvl).length;
-                        return (
-                          <button
-                            key={lvl}
-                            type="button"
-                            onClick={() => handleSelectLevel(lvl)}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
-                              selectedLevel === lvl
-                                ? "bg-[#1E3A8A] text-white shadow-xs"
-                                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                            }`}
-                          >
-                            {lvl === "Basic"
-                              ? `1. Basic (${countInLvl} Modul)`
-                              : lvl === "Intermediate"
-                              ? `2. Intermediate (${countInLvl} Modul)`
-                              : `3. Advance 550+ (${countInLvl} Modul)`}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <span className="text-[11px] font-bold text-slate-500">
-                      {correctAnswersCount}/{totalQuestionsCount} Total Bank Soal
+            {appMode === "diagnostic" && (
+              <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs space-y-5">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                  <div>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-blue-100 text-[#1E3A8A]">
+                      Mini Diagnostic Test • 9 Soal
                     </span>
+                    <h2 className="text-base sm:text-xl font-extrabold text-slate-900 mt-1">
+                      Pemetaan Skor Awal &amp; Rekomendasi Modul Prioritas
+                    </h2>
                   </div>
-
-                  <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
-                    <span className="text-[11px] font-extrabold text-slate-400 uppercase mr-1">Filter Section:</span>
-                    {sections.map((sec) => (
-                      <button
-                        key={sec}
-                        type="button"
-                        onClick={() => handleSelectSection(sec)}
-                        className={`px-3 py-1 rounded-lg text-xs font-extrabold border transition-all ${
-                          selectedSection === sec
-                            ? "bg-amber-400 text-slate-950 border-amber-500 shadow-2xs"
-                            : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                        }`}
-                      >
-                        {sec === "All"
-                          ? `Semua (${CURRICULUM.filter((t) => t.level === selectedLevel).length} Modul)`
-                          : sec}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {topicsInCurrentLevel.map((topic) => {
-                      const isActive = topic.id === selectedTopicId;
-                      const isDone = Boolean(completedTopics[topic.id]);
-                      const secBadgeColor =
-                        topic.section === "Listening"
-                          ? "bg-indigo-100 text-indigo-800 border-indigo-200"
-                          : topic.section === "Structure"
-                          ? "bg-blue-100 text-[#1E3A8A] border-blue-200"
-                          : "bg-emerald-100 text-emerald-800 border-emerald-200";
-                      return (
-                        <div
-                          key={topic.id}
-                          onClick={() => handleSelectTopic(topic.id, "materi")}
-                          className={`cursor-pointer text-left p-3 rounded-xl border transition-all flex flex-col justify-between gap-2 ${
-                            isActive
-                              ? "bg-blue-50/90 border-[#1E3A8A] ring-2 ring-[#1E3A8A]/15"
-                              : "bg-white border-slate-200 hover:border-slate-300"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-1">
-                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${secBadgeColor}`}>
-                              {topic.section} • {topic.code}
-                            </span>
-                            <div className="flex items-center gap-1.5">
-                              {isDone && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />}
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleSelectTopic(topic.id, "contoh");
-                                }}
-                                className="px-2 py-0.5 rounded-md bg-amber-100 hover:bg-amber-200 text-amber-950 border border-amber-300 text-[10px] font-extrabold"
-                              >
-                                Contoh Soal ({topic.questions.length})
-                              </button>
-                            </div>
-                          </div>
-                          <div>
-                            <div className={`text-xs font-extrabold leading-snug ${isActive ? "text-[#1E3A8A]" : "text-slate-900"}`}>
-                              {topic.shortTitle}
-                            </div>
-                            <div className="text-[10px] text-slate-500 mt-0.5">{topic.moduleRef}</div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* ACTIVE TOPIC HEADER */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs">
-                  <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-300">
-                      {currentTopic.moduleRef}
-                    </span>
-                    <span className="text-xs font-semibold text-slate-500">{currentTopic.category}</span>
-                  </div>
-                  <h2 className="text-base sm:text-xl font-extrabold text-slate-900">
-                    Topik {currentTopic.code}: {currentTopic.title}
-                  </h2>
-
-                  <div className="mt-4 grid grid-cols-2 gap-1.5 sm:gap-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
+                  {diagFinished && (
                     <button
                       type="button"
                       onClick={() => {
-                        stopSpeaking();
-                        setActiveTab("materi");
+                        setDiagIndex(0);
+                        setDiagAnswers({});
+                        setDiagFinished(false);
                       }}
-                      className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-[11px] sm:text-xs font-extrabold transition-all ${
-                        activeTab === "materi" ? "bg-white text-[#1E3A8A] shadow-xs" : "text-slate-600 hover:text-slate-900"
-                      }`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
                     >
-                      <BookOpen className="w-3.5 h-3.5 shrink-0" />
-                      <span>1. Materi, Rumus &amp; Jebakan</span>
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>Ulangi Tes</span>
                     </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        stopSpeaking();
-                        setActiveTab("contoh");
-                        setTopicExampleIndex(0);
-                        setHighlightedLine(null);
-                        setShowHint(false);
-                      }}
-                      className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-[11px] sm:text-xs font-extrabold transition-all ${
-                        activeTab === "contoh" ? "bg-amber-400 text-slate-950 shadow-xs" : "text-slate-600 hover:text-slate-900"
-                      }`}
-                    >
-                      <ListChecks className="w-3.5 h-3.5 shrink-0" />
-                      <span>2. Latihan Soal Topik ({activeTopicQuestions.length} Soal)</span>
-                    </button>
-                  </div>
+                  )}
                 </div>
 
-                {/* TAB 1: MATERI, RUMUS, CORET & SOROT, JEBAKAN UMUM */}
-                {activeTab === "materi" && (
-                  <div className="space-y-4">
-                    {currentTopic.passage && (
-                      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs space-y-3">
-                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                          <div className="flex items-center gap-2">
-                            <Layers className="w-4 h-4 text-[#1E3A8A]" />
-                            <h3 className="font-extrabold text-sm sm:text-base text-slate-900">{currentTopic.passage.title}</h3>
+                {!diagFinished ? (
+                  (() => {
+                    const dq = DIAGNOSTIC_QUESTIONS[diagIndex];
+                    const dAns = diagAnswers[dq.id];
+                    return (
+                      <div className="space-y-4">
+                        <div className="space-y-1.5">
+                          <div className="flex justify-between text-xs font-bold text-slate-500">
+                            <span>Soal {diagIndex + 1} dari {DIAGNOSTIC_QUESTIONS.length}</span>
+                            <span>Section: {dq.section}</span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => speakText(currentTopic.passage.text, "en-US", 0.92)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-[#1E3A8A] hover:bg-blue-100 border border-blue-200"
-                          >
-                            <Volume2 className="w-3.5 h-3.5" />
-                            <span>Baca Teks Inggris</span>
-                          </button>
+                          <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                            <div
+                              className="h-full bg-[#1E3A8A] transition-all"
+                              style={{ width: `${((diagIndex + 1) / DIAGNOSTIC_QUESTIONS.length) * 100}%` }}
+                            />
+                          </div>
                         </div>
 
-                        <div className="text-sm sm:text-[15px] leading-relaxed text-slate-800 space-y-2 font-serif bg-slate-50/70 p-4 rounded-xl border border-slate-200/80">
-                          {currentTopic.passage.lines
-                            ? currentTopic.passage.lines.map((line, i) => (
-                                <div key={i} className="flex gap-3">
-                                  <span className="font-mono text-[11px] font-bold text-slate-400 select-none pt-0.5">
-                                    {String(i + 1).padStart(2, "0")}
-                                  </span>
-                                  <p>{line}</p>
-                                </div>
-                              ))
-                            : currentTopic.passage.text.split("\n\n").map((para, i) => <p key={i}>{para}</p>)}
-                        </div>
-
-                        {showTranslations && (
-                          <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 text-xs sm:text-sm text-slate-700 space-y-1">
-                            <div className="font-bold text-amber-900 text-xs uppercase tracking-wider">Terjemahan Pendamping (ID):</div>
-                            <p className="leading-relaxed">{currentTopic.passage.translationId}</p>
+                        {dq.miniPassage && (
+                          <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs sm:text-sm text-slate-800 leading-relaxed">
+                            <span className="block text-[10px] font-extrabold uppercase text-emerald-700 mb-1">
+                              Bacaan Singkat:
+                            </span>
+                            {dq.miniPassage}
                           </div>
                         )}
-                      </div>
-                    )}
 
-                    {currentTopic.paragraphs.map((para) => (
-                      <div key={para.id} className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs space-y-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <h3 className="text-sm sm:text-base font-extrabold text-slate-900">{para.heading}</h3>
-                          <button
-                            type="button"
-                            onClick={() => speakText(para.voiceText)}
-                            className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-[#1E3A8A] hover:bg-blue-100 border border-blue-200"
-                          >
-                            <Volume2 className="w-3.5 h-3.5" />
-                            <span>Jelaskan</span>
-                          </button>
-                        </div>
-
-                        <p className="text-xs sm:text-sm leading-relaxed text-slate-700">{para.bodyId}</p>
-
-                        <div className="bg-slate-900 text-amber-300 font-mono text-xs px-3.5 py-2.5 rounded-xl overflow-x-auto">
-                          {para.englishRule}
-                        </div>
-
-                        {para.interactiveSentence && (
-                          <InteractiveSentenceBreakdown
-                            data={para.interactiveSentence}
-                            showTranslation={showTranslations}
-                          />
-                        )}
-
-                        <div className="space-y-2 pt-1">
-                          {para.examples.map((ex, idx) => (
-                            <div key={idx} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/90 space-y-1.5">
-                              <div className="flex items-start justify-between gap-2">
-                                <p className="text-xs sm:text-sm font-semibold text-slate-900 italic">“{ex.en}”</p>
-                                <button
-                                  type="button"
-                                  onClick={() => speakText(ex.en, "en-US", 0.9)}
-                                  className="shrink-0 p-1.5 rounded-lg text-slate-500 hover:text-[#1E3A8A] hover:bg-white border border-transparent hover:border-slate-200"
-                                >
-                                  <Volume2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                              {showTranslations && (
-                                <p className="text-xs text-slate-600">
-                                  <span className="font-semibold text-slate-700">Arti: </span>
-                                  {ex.id}
-                                </p>
-                              )}
-                              <span className="inline-block px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[11px] font-bold">
-                                {ex.highlight}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-
-                    {/* KOTAK JEBAKAN UMUM (SALAH VS. BENAR) */}
-                    {currentTopic.traps && currentTopic.traps.length > 0 && (
-                      <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 sm:p-5 space-y-3">
-                        <div className="flex items-center gap-2 text-amber-900 font-extrabold text-sm">
-                          <AlertTriangle className="w-4 h-4 text-amber-600" />
-                          <span>Jebakan Umum TOEFL (Salah vs. Benar)</span>
-                        </div>
-                        <div className="space-y-2.5">
-                          {currentTopic.traps.map((trap, i) => (
-                            <div key={i} className="rounded-xl bg-white border border-amber-200/80 p-3.5 shadow-2xs space-y-2">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                                <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-100 text-xs text-rose-900">
-                                  <span className="font-extrabold block text-[10px] uppercase text-rose-600 mb-0.5">Salah (Jebakan)</span>
-                                  {trap.wrong}
-                                </div>
-                                <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-100 text-xs text-emerald-900">
-                                  <span className="font-extrabold block text-[10px] uppercase text-emerald-600 mb-0.5">Benar</span>
-                                  {trap.right}
-                                </div>
-                              </div>
-                              <p className="text-xs text-slate-600">
-                                <strong className="text-slate-800">Kenapa?</strong> {trap.reason}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex flex-wrap items-center justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          stopSpeaking();
-                          setActiveTab("contoh");
-                          setTopicExampleIndex(0);
-                          setHighlightedLine(null);
-                          setShowHint(false);
-                        }}
-                        className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs sm:text-sm font-extrabold shadow-sm"
-                      >
-                        <ListChecks className="w-4 h-4" />
-                        <span>Latih Soal Topik Ini ({activeTopicQuestions.length} Soal)</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* TAB 2: LATIHAN SOAL TOPIK (5 / 10 SOAL FOKUS + SPLIT-SCREEN READING) */}
-                {activeTab === "contoh" && activeQuestion && (
-                  <div className="space-y-4">
-                    <div
-                      className={
-                        activePassageForSplitScreen
-                          ? "grid grid-cols-1 xl:grid-cols-12 gap-4 items-start"
-                          : "space-y-4"
-                      }
-                    >
-                      {/* SPLIT-SCREEN READING PASSAGE PANEL */}
-                      {activePassageForSplitScreen && (
-                        <div className="xl:col-span-5 bg-white rounded-2xl border border-slate-200 p-4 shadow-xs xl:sticky xl:top-32 space-y-3">
-                          <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
-                            <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700">
-                              Split-Screen Reading
-                            </span>
-                            {highlightedLine !== null && (
-                              <button
-                                type="button"
-                                onClick={() => setHighlightedLine(null)}
-                                className="text-[11px] text-slate-500 hover:text-slate-800 underline"
-                              >
-                                Hapus Sorotan
-                              </button>
-                            )}
-                          </div>
-                          <h4 className="font-extrabold text-sm text-slate-900">
-                            {activePassageForSplitScreen.title}
-                          </h4>
-                          <div className="space-y-2 text-xs sm:text-sm leading-relaxed text-slate-800 font-serif">
-                            {activePassageForSplitScreen.lines.map((line, lIdx) => (
-                              <div
-                                key={lIdx}
-                                className={`flex gap-2.5 p-2 rounded-lg transition-all ${
-                                  highlightedLine === lIdx
-                                    ? "bg-amber-200/80 ring-2 ring-amber-400 font-semibold text-slate-950"
-                                    : "bg-slate-50/70"
-                                }`}
-                              >
-                                <span className="font-mono text-[10px] font-bold text-slate-400 select-none pt-0.5">
-                                  {String(lIdx + 1).padStart(2, "0")}
-                                </span>
-                                <p>{line}</p>
-                              </div>
-                            ))}
-                          </div>
-                          {showTranslations && activePassageForSplitScreen.translationId && (
-                            <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200 text-xs text-slate-700">
-                              <strong className="text-amber-900 block mb-0.5">Ringkasan ID:</strong>
-                              {activePassageForSplitScreen.translationId}
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* QUESTION CARD */}
-                      <div
-                        className={`${
-                          activePassageForSplitScreen ? "xl:col-span-7" : ""
-                        } bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs space-y-5`}
-                      >
-                        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="px-2.5 py-1 rounded-lg text-xs font-extrabold bg-amber-100 text-amber-950 border border-amber-300">
-                              Latihan {currentTopic.code}: {topicExampleIndex + 1}/{activeTopicQuestions.length}
-                            </span>
-                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700">
-                              {activeQuestion.skillTag}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-1.5">
-                            {currentTopic.section !== "Reading" && (
-                              <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
-                                {[5, 10].map((cnt) => (
-                                  <button
-                                    key={cnt}
-                                    type="button"
-                                    onClick={() => {
-                                      setTopicPracticeLimit(cnt);
-                                      setTopicExampleIndex(0);
-                                    }}
-                                    className={`px-2 py-1 rounded-md text-[11px] font-extrabold ${
-                                      topicPracticeLimit === cnt
-                                        ? "bg-[#1E3A8A] text-white"
-                                        : "text-slate-600"
-                                    }`}
-                                  >
-                                    {cnt} Soal
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-
-                            {activeQuestion.evidenceLine !== undefined && activePassageForSplitScreen && (
-                              <button
-                                type="button"
-                                onClick={() => setHighlightedLine(activeQuestion.evidenceLine)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100"
-                              >
-                                <Lightbulb className="w-3.5 h-3.5" />
-                                <span>Sorot Bukti</span>
-                              </button>
-                            )}
-
+                        {dq.audioScript && (
+                          <div className="p-4 rounded-xl bg-slate-900 text-white flex flex-wrap items-center justify-between gap-2">
+                            <span className="text-xs font-bold text-amber-300">Audio Diagnostic ({dq.section})</span>
                             <button
                               type="button"
-                              onClick={() => toggleBookmark(activeQuestion.id)}
-                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${
-                                bookmarkedIds.includes(activeQuestion.id)
-                                  ? "bg-amber-100 text-amber-900 border-amber-300"
-                                  : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                              }`}
+                              onClick={() => handlePlayAudio(`diag-audio-${dq.id}`, dq.audioScript, false, 0.94)}
+                              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold"
                             >
-                              {bookmarkedIds.includes(activeQuestion.id) ? (
-                                <BookmarkCheck className="w-3.5 h-3.5 text-amber-700" />
-                              ) : (
-                                <Bookmark className="w-3.5 h-3.5" />
-                              )}
-                              <span>{bookmarkedIds.includes(activeQuestion.id) ? "Tersimpan" : "Simpan"}</span>
+                              <Headphones className="w-4 h-4" />
+                              <span>Putar Audio</span>
                             </button>
                           </div>
-                        </div>
+                        )}
 
-                        {/* QUESTION SELECTOR STRIP */}
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {activeTopicQuestions.map((q, idx) => {
-                            const answered = userAnswers[q.id];
-                            return (
-                              <button
-                                key={q.id}
-                                type="button"
-                                onClick={() => {
-                                  stopSpeaking();
-                                  setTopicExampleIndex(idx);
-                                  setHighlightedLine(null);
-                                  setShowHint(false);
-                                }}
-                                className={`px-2.5 py-1 rounded-lg text-xs font-extrabold border ${
-                                  idx === topicExampleIndex
-                                    ? "bg-amber-400 text-slate-950 border-amber-500"
-                                    : answered
-                                    ? answered.isCorrect
-                                      ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                                      : "bg-rose-100 text-rose-800 border-rose-300"
-                                    : "bg-slate-50 text-slate-600 border-slate-200"
-                                }`}
-                              >
-                                #{idx + 1}
-                              </button>
-                            );
-                          })}
-                        </div>
+                        <p className="text-sm sm:text-base font-bold text-slate-900">{dq.prompt}</p>
 
-                        {/* AUDIO OR QUESTION STEM */}
-                        <div className="space-y-3">
-                          {activeQuestion.section === "Listening" ? (
-                            <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-2.5">
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <span className="text-xs font-extrabold text-amber-300">
-                                  Audio Listening Topik {currentTopic.code}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handlePlayAudio(
-                                      activeQuestion.id,
-                                      activeQuestion.audioScript || activeQuestion.prompt,
-                                      false,
-                                      0.94
-                                    )
-                                  }
-                                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold"
-                                >
-                                  <Headphones className="w-4 h-4" />
-                                  <span>Putar Audio</span>
-                                </button>
-                              </div>
-                              <p className="text-xs sm:text-sm font-bold text-slate-100">
-                                {activeQuestion.prompt}
-                              </p>
-                            </div>
-                          ) : (
-                            <div className="flex items-start justify-between gap-2">
-                              <p className="text-sm sm:text-base font-bold text-slate-900 leading-relaxed">
-                                {activeQuestion.prompt}
-                              </p>
-                              <button
-                                type="button"
-                                onClick={() => speakText(activeQuestion.prompt, "en-US", 0.92)}
-                                className="shrink-0 p-2 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-[#1E3A8A] border border-slate-200"
-                              >
-                                <Volume2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          )}
-
-                          {showTranslations && activeQuestion.translationId && (
-                            <p className="text-xs sm:text-sm text-slate-600 bg-amber-50/70 border border-amber-200/80 px-3.5 py-2.5 rounded-xl">
-                              <span className="font-bold text-amber-900">Terjemahan: </span>
-                              {activeQuestion.translationId}
-                            </p>
-                          )}
-
-                          {!userAnswers[activeQuestion.id] && activeQuestion.hintId && (
-                            <div>
-                              <button
-                                type="button"
-                                onClick={() => setShowHint((prev) => !prev)}
-                                className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 hover:text-amber-800"
-                              >
-                                <Lightbulb className="w-3.5 h-3.5" />
-                                <span>{showHint ? "Sembunyikan Petunjuk" : "Butuh Petunjuk Dosen?"}</span>
-                              </button>
-                              {showHint && (
-                                <div className="mt-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
-                                  {activeQuestion.hintId}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* OPTIONS */}
-                        <div className="space-y-2.5">
-                          {activeQuestion.options.map((opt) => {
-                            const userAns = userAnswers[activeQuestion.id];
-                            const isAnswered = Boolean(userAns);
-                            const isSelected = userAns?.selectedKey === opt.key;
-                            const isCorrectOpt = opt.key === activeQuestion.correctKey;
-
-                            let cardClass = "bg-white border-slate-200 hover:border-[#1E3A8A] hover:bg-blue-50/40 text-slate-800";
-                            if (isAnswered) {
-                              if (isCorrectOpt) cardClass = "bg-emerald-50 border-emerald-500 text-emerald-950 ring-2 ring-emerald-500/20";
-                              else if (isSelected) cardClass = "bg-rose-50 border-rose-400 text-rose-950";
-                              else cardClass = "bg-slate-50 border-slate-200 text-slate-400 opacity-75";
+                        <div className="space-y-2">
+                          {dq.options.map((opt) => {
+                            const isPicked = dAns?.selectedKey === opt.key;
+                            const isRight = opt.key === dq.correctKey;
+                            let cls = "bg-white border-slate-200 hover:border-[#1E3A8A] text-slate-800";
+                            if (dAns) {
+                              if (isRight) cls = "bg-emerald-50 border-emerald-500 text-emerald-950 font-bold";
+                              else if (isPicked) cls = "bg-rose-50 border-rose-400 text-rose-950";
+                              else cls = "bg-slate-50 border-slate-200 text-slate-400";
                             }
-
                             return (
                               <button
                                 key={opt.key}
                                 type="button"
-                                disabled={isAnswered}
-                                onClick={() => handleAnswerSelect(opt.key)}
-                                className={`w-full text-left p-3.5 rounded-xl border transition-all flex items-center justify-between gap-3 ${cardClass}`}
+                                disabled={Boolean(dAns)}
+                                onClick={() => handleDiagnosticAnswer(dq, opt.key)}
+                                className={`w-full text-left p-3.5 rounded-xl border text-xs sm:text-sm flex items-center gap-3 ${cls}`}
                               >
-                                <div className="flex items-center gap-3">
-                                  <span
-                                    className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-extrabold shrink-0 ${
-                                      isAnswered && isCorrectOpt
-                                        ? "bg-emerald-600 text-white"
-                                        : isAnswered && isSelected
-                                        ? "bg-rose-600 text-white"
-                                        : "bg-slate-100 text-slate-700 border border-slate-300"
-                                    }`}
-                                  >
-                                    {opt.key}
-                                  </span>
-                                  <span className="text-xs sm:text-sm font-semibold">{opt.text}</span>
-                                </div>
-                                {isAnswered && isCorrectOpt && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
-                                {isAnswered && isSelected && !isCorrectOpt && <XCircle className="w-5 h-5 text-rose-600 shrink-0" />}
+                                <span className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-300 flex items-center justify-center font-black text-xs shrink-0">
+                                  {opt.key}
+                                </span>
+                                <span>{opt.text}</span>
                               </button>
                             );
                           })}
                         </div>
 
-                        {/* EXPLANATION */}
-                        {userAnswers[activeQuestion.id] && (
-                          <div className="rounded-2xl border border-slate-200 bg-slate-900 text-slate-100 p-4 sm:p-5 space-y-3.5">
-                            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
-                              {userAnswers[activeQuestion.id].isCorrect ? (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-extrabold border border-emerald-500/30">
-                                  <CheckCircle2 className="w-4 h-4" /> Jawaban Benar!
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 text-xs font-extrabold border border-rose-500/30">
-                                  <XCircle className="w-4 h-4" /> Kurang Tepat (Kunci: {activeQuestion.correctKey})
-                                </span>
-                              )}
-
-                              <div className="flex items-center gap-2">
-                                {!userAnswers[activeQuestion.id].isCorrect && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleChallengeLecturer(userAnswers[activeQuestion.id].selectedKey)}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-extrabold"
-                                  >
-                                    <HelpCircle className="w-3.5 h-3.5" />
-                                    <span>Kenapa bukan {userAnswers[activeQuestion.id].selectedKey}?</span>
-                                  </button>
-                                )}
-                                <button
-                                  type="button"
-                                  onClick={() => speakText(activeQuestion.voiceWalkthrough)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold"
-                                >
-                                  <Volume2 className="w-3.5 h-3.5" />
-                                  <span>Suara</span>
-                                </button>
-                              </div>
+                        {dAns && (
+                          <div className="p-3.5 rounded-xl bg-slate-900 text-slate-100 text-xs space-y-1">
+                            <div className="font-extrabold text-amber-300">
+                              {dAns.isCorrect ? "Tepat Sekali!" : `Belum Tepat (Kunci: ${dq.correctKey})`}
                             </div>
-
-                            {activeQuestion.breakdown && (
-                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-                                <div className="p-2.5 rounded-xl bg-slate-800 border border-slate-700">
-                                  <div className="text-slate-400 font-bold uppercase text-[10px]">Fokus / Subject</div>
-                                  <div className="text-emerald-300 font-semibold mt-0.5">{activeQuestion.breakdown.subject}</div>
-                                </div>
-                                <div className="p-2.5 rounded-xl bg-slate-800 border border-slate-700">
-                                  <div className="text-slate-400 font-bold uppercase text-[10px]">Verb / Kunci</div>
-                                  <div className="text-sky-300 font-semibold mt-0.5">{activeQuestion.breakdown.verb}</div>
-                                </div>
-                                <div className="p-2.5 rounded-xl bg-slate-800 border border-slate-700">
-                                  <div className="text-slate-400 font-bold uppercase text-[10px]">Jebakan</div>
-                                  <div className="text-amber-300 font-semibold mt-0.5">{activeQuestion.breakdown.trap}</div>
-                                </div>
-                              </div>
-                            )}
-
-                            {activeQuestion.optionAnalysis && (
-                              <div className="space-y-1.5 text-xs">
-                                {activeQuestion.options.map((opt) => (
-                                  <div
-                                    key={opt.key}
-                                    className={`p-2 rounded-xl border ${
-                                      opt.key === activeQuestion.correctKey
-                                        ? "bg-emerald-950/60 border-emerald-700/70 text-emerald-100"
-                                        : "bg-slate-800/50 border-slate-700/70 text-slate-300"
-                                    }`}
-                                  >
-                                    <span className="font-extrabold mr-1.5">{opt.key}.</span>
-                                    {activeQuestion.optionAnalysis[opt.key]}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
+                            <p>{dq.explanation}</p>
                           </div>
                         )}
 
-                        {/* PREV / NEXT */}
                         <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                           <button
                             type="button"
-                            disabled={topicExampleIndex === 0}
-                            onClick={() => {
-                              stopSpeaking();
-                              setTopicExampleIndex((i) => Math.max(0, i - 1));
-                              setHighlightedLine(null);
-                              setShowHint(false);
-                            }}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-40"
+                            disabled={diagIndex === 0}
+                            onClick={() => setDiagIndex((i) => Math.max(0, i - 1))}
+                            className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 disabled:opacity-40"
                           >
-                            <ChevronLeft className="w-4 h-4" />
-                            <span>Sebelumnya</span>
+                            ← Sebelumnya
                           </button>
-
-                          {topicExampleIndex < activeTopicQuestions.length - 1 ? (
+                          {diagIndex < DIAGNOSTIC_QUESTIONS.length - 1 ? (
                             <button
                               type="button"
-                              onClick={() => {
-                                stopSpeaking();
-                                setTopicExampleIndex((i) => i + 1);
-                                setHighlightedLine(null);
-                                setShowHint(false);
-                              }}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-amber-400 text-slate-950 hover:bg-amber-300"
+                              onClick={() => setDiagIndex((i) => i + 1)}
+                              className="px-4 py-2 rounded-xl bg-[#1E3A8A] text-white text-xs font-extrabold"
                             >
-                              <span>Soal Berikutnya</span>
-                              <ChevronRight className="w-4 h-4" />
+                              Soal Berikutnya →
                             </button>
                           ) : (
                             <button
                               type="button"
-                              onClick={() => {
-                                stopSpeaking();
-                                setAppMode("exam");
-                              }}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#1E3A8A] text-white hover:bg-blue-900"
+                              onClick={handleFinishDiagnostic}
+                              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold"
                             >
-                              <span>Uji di Simulasi Real TOEFL ITP</span>
-                              <ArrowRight className="w-4 h-4" />
+                              Lihat Skor &amp; Rekomendasi →
                             </button>
                           )}
                         </div>
                       </div>
+                    );
+                  })()
+                ) : (
+                  <div className="space-y-5">
+                    <div className="p-6 rounded-2xl bg-gradient-to-br from-[#1E3A8A] to-blue-800 text-white text-center space-y-2">
+                      <span className="text-[11px] font-bold uppercase tracking-widest text-amber-300">
+                        Estimasi Skor Awal TOEFL ITP
+                      </span>
+                      <div className="text-5xl font-black">{diagnosticScore}</div>
+                      <p className="text-xs text-blue-100 max-w-md mx-auto">
+                        {diagnosticScore >= 550
+                          ? "Luar biasa! Kamu sudah berada di zona 550+. Langsung tantang dirimu di Simulasi Real TOEFL ITP!"
+                          : "Fokus pelajari modul prioritas di bawah ini untuk menaikkan skormu menembus 550+."}
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-extrabold text-slate-900">Rekomendasi Modul Prioritas:</h3>
+                      {DIAGNOSTIC_QUESTIONS.filter((q) => !diagAnswers[q.id]?.isCorrect).length === 0 ? (
+                        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800">
+                          Sempurna! Semua soal Diagnostic benar. Lanjut ke Modul Advance 550+ atau Simulasi Real ITP.
+                        </div>
+                      ) : (
+                        DIAGNOSTIC_QUESTIONS.filter((q) => !diagAnswers[q.id]?.isCorrect).map((q) => (
+                          <div
+                            key={q.id}
+                            className="p-3.5 rounded-xl border border-rose-200 bg-rose-50/40 flex flex-wrap items-center justify-between gap-2"
+                          >
+                            <div>
+                              <span className="text-[11px] font-extrabold text-rose-700">
+                                {q.section} • Modul {q.recommendedCode}
+                              </span>
+                              <p className="text-xs text-slate-700 mt-0.5">{q.explanation}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleSelectTopic(q.recommendedTopicId, "materi")}
+                              className="px-3.5 py-2 rounded-xl bg-[#1E3A8A] hover:bg-blue-900 text-white text-xs font-extrabold"
+                            >
+                              Pelajari {q.recommendedCode} →
+                            </button>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </div>
                 )}
-              </>
+              </div>
             )}
 
             {/* ================================================================
@@ -2673,145 +2176,6 @@ export default function App() {
                     );
                   })()}
                 </div>
-              </div>
-            )}
-
-            {/* ================================================================
-                MODE 4: SIMULASI TIMER
-               ================================================================ */}
-            {appMode === "exam" && (
-              <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs space-y-5">
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
-                  <div>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-rose-100 text-rose-800">Simulasi TOEFL ITP Asli</span>
-                    <h2 className="text-base sm:text-xl font-extrabold text-slate-900 mt-1">Mini-Test Structure (8 Soal • 6 Menit)</h2>
-                  </div>
-                  {examStarted && !examSubmitted && (
-                    <div className={`px-3.5 py-2 rounded-xl font-mono text-sm font-black border ${examSecondsLeft < 60 ? "bg-rose-600 text-white border-rose-700 animate-pulse" : "bg-slate-900 text-amber-300 border-slate-800"}`}>
-                      {formatTimer(examSecondsLeft)}
-                    </div>
-                  )}
-                </div>
-
-                {!examStarted ? (
-                  <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-3">
-                    <Timer className="w-10 h-10 text-[#1E3A8A] mx-auto" />
-                    <h3 className="text-base font-extrabold text-slate-900">Siap Menguji Kecepatanmu?</h3>
-                    <p className="text-xs sm:text-sm text-slate-600 max-w-lg mx-auto">
-                      Uji campuran seluruh topik dalam 6 menit untuk melihat Rapor Analisis Kelemahan per Materi.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setExamAnswers({});
-                        setExamSecondsLeft(360);
-                        setExamSubmitted(false);
-                        setExamStarted(true);
-                      }}
-                      className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#1E3A8A] hover:bg-blue-900 text-white text-xs sm:text-sm font-extrabold"
-                    >
-                      <Play className="w-4 h-4" />
-                      <span>Mulai Simulasi Berwaktu</span>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {examSubmitted && examReport && (
-                      <div className="p-5 rounded-2xl bg-slate-900 text-white space-y-4">
-                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
-                          <div className="flex items-center gap-2">
-                            <BarChart3 className="w-5 h-5 text-amber-400" />
-                            <h3 className="text-sm sm:text-base font-extrabold">Rapor Analisis Kelemahan</h3>
-                          </div>
-                          <span className="px-3 py-1 rounded-xl bg-amber-400 text-slate-950 text-xs font-black">
-                            Benar: {examReport.correct}/{examReport.total} • Est. Sec 2: {examReport.projectedStructureScore}/68
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-                          {Object.entries(examReport.skillStats).map(([skillName, stat]) => {
-                            const pct = Math.round((stat.correct / stat.total) * 100);
-                            return (
-                              <div key={skillName} className="p-3 rounded-xl bg-slate-800 border border-slate-700 space-y-1.5">
-                                <div className="flex justify-between font-bold">
-                                  <span>{skillName}</span>
-                                  <span className={pct === 100 ? "text-emerald-400" : "text-amber-300"}>{pct}%</span>
-                                </div>
-                                <div className="w-full h-2 rounded-full bg-slate-700 overflow-hidden">
-                                  <div className={`h-full ${pct === 100 ? "bg-emerald-500" : "bg-amber-400"}`} style={{ width: `${pct}%` }} />
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setExamAnswers({});
-                            setExamSecondsLeft(360);
-                            setExamSubmitted(false);
-                          }}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold"
-                        >
-                          <RefreshCw className="w-3.5 h-3.5" />
-                          <span>Ulangi Simulasi</span>
-                        </button>
-                      </div>
-                    )}
-
-                    {MINI_TEST_QUESTIONS.map((q, idx) => {
-                      const picked = examAnswers[q.id];
-                      return (
-                        <div key={q.id} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-3">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="font-extrabold text-[#1E3A8A]">Nomor {idx + 1}</span>
-                            {examSubmitted && <span className="px-2 py-0.5 rounded bg-slate-200 text-slate-700 font-bold">{q.skill}</span>}
-                          </div>
-                          <p className="text-xs sm:text-sm font-bold text-slate-900">{q.prompt}</p>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {q.options.map((opt) => {
-                              const isPicked = picked === opt.key;
-                              const isRight = opt.key === q.correctKey;
-                              let cls = "bg-white border-slate-200 text-slate-700 hover:border-[#1E3A8A]";
-                              if (examSubmitted) {
-                                if (isRight) cls = "bg-emerald-50 border-emerald-500 text-emerald-950 font-bold";
-                                else if (isPicked) cls = "bg-rose-50 border-rose-400 text-rose-950";
-                              } else if (isPicked) {
-                                cls = "bg-blue-50 border-[#1E3A8A] text-[#1E3A8A] font-bold";
-                              }
-                              return (
-                                <button
-                                  key={opt.key}
-                                  type="button"
-                                  disabled={examSubmitted}
-                                  onClick={() => setExamAnswers((prev) => ({ ...prev, [q.id]: opt.key }))}
-                                  className={`p-2.5 rounded-xl border text-left text-xs flex items-center gap-2 ${cls}`}
-                                >
-                                  <span className="font-black">{opt.key}.</span>
-                                  <span>{opt.text}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                          {examSubmitted && (
-                            <div className="p-2.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-700">
-                              <strong>Pembahasan:</strong> {q.explanation}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-
-                    {!examSubmitted && (
-                      <button
-                        type="button"
-                        onClick={() => setExamSubmitted(true)}
-                        className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-extrabold"
-                      >
-                        Kumpulkan Jawaban &amp; Lihat Rapor Analisis
-                      </button>
-                    )}
-                  </div>
-                )}
               </div>
             )}
 
